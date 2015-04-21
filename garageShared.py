@@ -59,7 +59,7 @@ def send_message(msg):
 def configureLogger(name=loggerName):
 	l = logging.getLogger(name)
 	l.setLevel(logging.DEBUG)
-	fh = logging.FileHandler("{0}.log".format(name))
+	fh = logging.FileHandler("./logs/{0}.log".format(name))
 	fh.setLevel(logging.INFO)
 	sh = logging.StreamHandler()
 	sh.setLevel(logging.DEBUG)

@@ -114,7 +114,8 @@ class SMS_Monitor(multiprocessing.Process):
 			self.l.info("Put msg in queue to open Heather's door from Zane.")
 			return "Received"
 
-		uuid_store = shelve.open("./uuid_store")
+		# Very bad style hard-coding this. Some day I'll fix it
+		uuid_store = shelve.open("./logs/uuid_store")
 		app.run(host='0.0.0.0', debug=self.debug)
 		return
 
