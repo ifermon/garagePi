@@ -13,6 +13,8 @@ import datetime
 import pytz
 import ephem
 
+LOG_DIR='/home/pi/garagePi/logs/'
+
 eastern = pytz.timezone('US/Eastern')
 utc = pytz.timezone('UTC')
 
@@ -69,10 +71,10 @@ class DayLightValue(object):
 		self.day = datetime.date(dt.year, dt.month, dt.day)
 
 		if log_file_name == None:
-			log_file_name = "./logs/LightLevelReadings-{0}.csv".format(
+			log_file_name = "LightLevelReadings-{0}.csv".format(
 					dt.strftime("%Y-%m-%d"))
 		if log_file_dir == None:
-			log_file_dir = "./"
+			log_file_dir = LOG_DIR
 		log_file_name = "{0}{1}".format(log_file_dir, log_file_name)
 		self.lp = open(log_file_name, "a", 0)
 		self.closed = False

@@ -12,6 +12,7 @@ import datetime as dt
 
 # Name for logger
 loggerName = "GaragePi"
+LOG_DIR = "/home/pi/garagePi/logs/"
 
 # Placeholder for lock
 lock = None
@@ -59,7 +60,7 @@ def send_message(msg):
 def configureLogger(name=loggerName):
 	l = logging.getLogger(name)
 	l.setLevel(logging.DEBUG)
-	fh = logging.FileHandler("./logs/{0}.log".format(name))
+	fh = logging.FileHandler("{0}{1}.log".format(LOG_DIR, name))
 	fh.setLevel(logging.INFO)
 	sh = logging.StreamHandler()
 	sh.setLevel(logging.DEBUG)

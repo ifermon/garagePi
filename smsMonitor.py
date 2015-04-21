@@ -11,6 +11,7 @@ import shelve
 import datetime
 import myPlivo
 
+LOG_DIR="/home/pi/garagePi/logs/"
 	
 ###############################################################################
 """
@@ -116,7 +117,7 @@ class SMS_Monitor(multiprocessing.Process):
 			return "Received"
 
 		# Very bad style hard-coding this. Some day I'll fix it
-		uuid_store = shelve.open("./logs/uuid_store")
+		uuid_store = shelve.open("{0}{1}".format(LOG_DIR, "uuid_store"))
 		app.run(host='0.0.0.0', debug=self.debug)
 		return
 
