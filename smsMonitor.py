@@ -30,7 +30,7 @@ class SMS_Monitor(multiprocessing.Process):
 	  This is a function that calcualtes the hash key for the plivo message
 	  Essentially it ensures that the message is from plivo
 	"""
-	def validate_signature (uri, post_params, signature, auth_token):
+	def validate_signature (self, uri, post_params, signature, auth_token):
 		for k, v in sorted(post_params.items()):
 			uri += k + v
 		s = base64.encodestring(hmac.new(auth_token, uri, 
@@ -100,9 +100,10 @@ class SMS_Monitor(multiprocessing.Process):
 				sys.exit(1)
 
 			# Add the uuid to the message store
-			uuid_store[uuid] = request.form + [datetime.datetime.now()]
+			d = dict(request.form).update({'Datestamp':datetime.datetime.now()})
+			uuid_store[uuid] = d
 
-			self.queue.put(request.values)
+			self.queue.put_nowait(request.values)
 			self.l.info("Put msg into queue")
 			return "Received"
 
