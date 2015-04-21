@@ -64,10 +64,10 @@ def configureLogger(name=loggerName):
 	fh.setLevel(logging.INFO)
 	sh = logging.StreamHandler()
 	sh.setLevel(logging.DEBUG)
-	#formatter = logging.Formatter("%(asctime)s|%(name)s|" +
-	#	"%(levelname)s|%(message)s")
-	formatter = logging.Formatter("%(message)s |%(asctime)s|%(process)d" +
-			"|%(thread)d|%(lineno)s|%(filename)s", "%y%m%d|%H%M%S")
+	formatter = logging.Formatter("%(asctime)s %(message)s " +
+		"%(filename)s(%(lineno)s)")
+	#formatter = logging.Formatter("%(message)s |%(asctime)s|%(process)d" +
+	#"|%(thread)d|%(lineno)s|%(filename)s", "%y%m%d|%H%M%S")
 	fh.setFormatter(formatter)
 	sh.setFormatter(formatter)
 	l.addHandler(fh)
