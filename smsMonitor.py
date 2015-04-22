@@ -1,5 +1,5 @@
 from flask import Flask, request, redirect
-import multiprocessing 
+import multiprocessing as MP
 import sys
 import os
 import garageShared as GS
@@ -19,7 +19,7 @@ LOG_DIR="/home/pi/garagePi/logs/"
 	from a service called twilio, they are sms messages. No messages are 
 	processed here, only sent on to the main program.
 """
-class SMS_Monitor(multiprocessing.Process):
+class SMS_Monitor(MP.Process):
 
 	def __init__(self, queue, debug=True):
 		super(SMS_Monitor, self).__init__(name="SMS_Monitor")
@@ -53,7 +53,7 @@ class SMS_Monitor(multiprocessing.Process):
 		log_name = "{0}|{1}".format(
 				self.__class__.__name__, sys._getframe().f_code.co_name)
 		l.info("{0}: Name <{1}> Parent <l{2}> PID <{3}>".format(log_name,
-				multiprocessing.current_process().name, os.getppid(), 
+				MP.current_process().name, os.getppid(), 
 				os.getpid()))
 
 		app = Flask(__name__)
@@ -66,7 +66,7 @@ class SMS_Monitor(multiprocessing.Process):
 		def get_message():
 			# This is the uri used by plivo. The port translation is from 
 			# the gateway. The ddns is by ddns.net
-			uri = "http://ifermon.ddns.net:6000/"
+			uri = "https://ifermon.ddns.net:6000/"
 			self.l.info("Got message on {0}\nmsg: \"{1}\"".format(uri, 
 					request.values))
 
@@ -77,7 +77,7 @@ class SMS_Monitor(multiprocessing.Process):
 				self.l.info("No plivo sig. Possible hack. Shutting down")
 				GS.send_message("Shutting down system. Possible hack.")
 				self.queue.put({"Msg:": "Shutting down"})
-				sys.exit(1)
+				self.terminate()
 
 			signature = request.headers['X-Plivo-Signature']
 			if not self.validate_signature(uri, request.form, signature, 
@@ -87,7 +87,7 @@ class SMS_Monitor(multiprocessing.Process):
 				self.l.info("Invalid hash. Possible hack. Shutting down")
 				GS.send_message("Shutting down system. Possible hack.")
 				self.queue.put({"Msg:": "Shutting down"})
-				sys.exit(1)
+				self.terminate()
 
 			# Signature is validated, now make sure it's not a duplicate
 			# message
@@ -98,7 +98,7 @@ class SMS_Monitor(multiprocessing.Process):
 				self.l.info("Duplicate msg. Possible hack. Shutting down")
 				GS.send_message("Shutting down system. Possible hack.")
 				self.queue.put({"Msg:": "Shutting down"})
-				sys.exit(1)
+				self.terminate()
 
 			# Add the uuid to the message store
 			d = dict(request.form).update({'Datestamp':datetime.datetime.now()})
@@ -118,7 +118,7 @@ class SMS_Monitor(multiprocessing.Process):
 
 		# Very bad style hard-coding this. Some day I'll fix it
 		uuid_store = shelve.open("{0}{1}".format(LOG_DIR, "uuid_store"))
-		app.run(host='0.0.0.0', debug=self.debug)
+		app.run(host='0.0.0.0', debug=self.debug, ssl_context='adhoc')
 		return
 
 
@@ -131,3 +131,8 @@ class SMS_Monitor(multiprocessing.Process):
 	def send_cmd(self, cmd):
 		return "Got command <{0}>.".format(cmd)
 
+
+if __name__ == "__main__":
+	mon = SMS_Monitor(MP.Queue())
+	mon.daemon = False
+	mon.start()

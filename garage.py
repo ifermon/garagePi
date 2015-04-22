@@ -62,10 +62,10 @@ if __name__ == "__main__":
 	# everything is set up, now wait for messages and process them as needed
 	while keep_alive:
 		# wait until we get a message
-		l.info("Waiting for message")
+		#l.info("Waiting for message")
 		try:
 			msg = q.get(True, 10)
-			#l.debug ("Recevied message <{0}>.".format(msg))
+			l.debug ("Recevied message <{0}>.".format(msg))
 		except Empty:
 			#l.info("Queue get timed out after waiting for a day")
 			continue
