@@ -1,0 +1,28 @@
+auto lo
+
+iface lo inet loopback
+iface eth0 inet dhcp
+
+#allow-hotplug wlan0
+#iface wlan0 inet manual
+
+auto wlan0
+allow-hotplug wlan0
+iface wlan0 inet static
+   address 192.168.0.210
+   netmask 255.255.255.0
+   network 192.168.0.1
+   broadcast 192.168.0.255
+   gateway 192.168.0.1
+   dns-nameservers 8.8.8.8 8.8.4.4
+   wpa-scan-ssid 1
+   wpa-ap-scan 1
+   wpa-key-mgmt WPA-PSK
+   wpa-proto RSN WPA
+   wpa-pairwise CCMP TKIP
+   wpa-group CCMP TKIP
+   wpa-ssid "nano"
+   wpa-psk "4fd87058b5aa29a0418e2ee82248575787d1705dd34c0c8c4006ecb34e49a01c"
+
+#wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf
+iface default inet dhcp
