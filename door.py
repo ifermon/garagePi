@@ -70,6 +70,7 @@ class Door(object):
 
 		# Add a timer to wake at 10pm and check the door
 		self.n10pm_timer = Timer(GS.secs_until_10pm(), self.n10pm_check)
+		self.n10pm_timer.start()
 
 		self.l.info("\n\tName: {0}\n".format(name) +
 				"\tProcess name: {0}\n".format(mp.current_process().name) +
@@ -93,6 +94,7 @@ class Door(object):
 
 		# Set a new timer for the next 10pm
 		self.n10pm_timer = Timer(self.secs_until_10pm(), self.n10pm_check)
+		self.n10pm_timer.start()
 		self.l.debug("10pm door check finished for {0}".format(self.name))
 		return
 		
