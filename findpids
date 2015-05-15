@@ -1,1 +1,1 @@
-ps -ef | grep -e go -e python
+ps -ef | grep -e [g]o -e pyth[o]n

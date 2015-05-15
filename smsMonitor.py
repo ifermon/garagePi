@@ -48,6 +48,7 @@ class SMS_Monitor(MP.Process):
 	"""
 	def run(self):
 		self.l = GS.configureLogger("GaragePiFlaskLogger")
+		self.l.info("Just configured logger")
 
 		l = self.l
 		log_name = "{0}|{1}".format(
@@ -108,12 +109,27 @@ class SMS_Monitor(MP.Process):
 			self.l.info("Put msg into queue")
 			return "Received"
 
+		'''
+			The irony with all the security in the above function is this
+			wide open security hole. At least it texts me when used.
+		'''
 		@app.route("/zane", methods=['GET'])
 		def zane_open_door():
 			self.l.info("Zane is requesting open door")
 			self.queue.put({'Text':'h', 'From':'16509968841'})
 			GS.send_message('Zane triggered door.')
 			self.l.info("Put msg in queue to open Heather's door from Zane.")
+			return "Received"
+
+		'''
+			Send text - using to monitor up time of other devices
+		'''
+		@app.route("/send_message", methods=['GET', 'POST'])
+		def send_msg():
+			print("Got msg: {0}".format(request.args))
+			if request.args.has_key('msg'):
+				msg = request.args['msg']
+				GS.send_message(msg)
 			return "Received"
 
 		# Very bad style hard-coding this. Some day I'll fix it

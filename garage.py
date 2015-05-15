@@ -30,6 +30,7 @@ if __name__ == "__main__":
 	# get things set up
 	keep_alive = True
 	l = GS.configureLogger(GS.loggerName)
+	l.info("Just configured logger")
 	GS.lock = RLock()
 	q = Queue()
 	ivan_door = Door(23,18,"Ivan")
@@ -58,6 +59,9 @@ if __name__ == "__main__":
 			'h': heather_door.press_button}
 	# Number map just gives a list of valid numbers for the from
 	valid_numbers = Set(['16509968841', '5184787802'])
+
+	# Send myself a message that we are starting up
+	GS.send_message("Starting up garagePi")
 
 	# everything is set up, now wait for messages and process them as needed
 	while keep_alive:

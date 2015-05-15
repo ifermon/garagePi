@@ -108,14 +108,13 @@ class Light_Monitor(thread.Thread):
 			# Check to see if I should even be checking, sensor only
 			# works when it's dark
 			if not GS.is_dark():
-				''' Taking this out apr 7 to test light level monitoring
 				now = datetime.datetime.now(GS.my_tz())
 				secs_till_sunset =  int((GS.sunset() - now).total_seconds())
 				l.info("Sleeping till sunset at <{0}> for {1} seconds".	
 						format(GS.sunset(), secs_till_sunset))
 				# now I should just sleep till one hour afer sunset 
 				time.sleep(secs_till_sunset + 3600)
-				'''
+				''' Removed may 15 2015 since weather is working
 				# BEG OF NEW STUFF FOR LIGHT LEVEL
 				now = datetime.datetime.now(GS.my_tz())
 				# Should only happen the first time, create light level logger
@@ -131,6 +130,7 @@ class Light_Monitor(thread.Thread):
 					self.day_light_levels = LLL.DayLightValue(now)
 				continue
 				# END OF NEW STUFF FOR LIGHT LEVEL
+				'''
 
 			# Set a 10pm check
 			self.n10pm_timer = Timer(GS.secs_until_10pm(), self.n10pm_check)
