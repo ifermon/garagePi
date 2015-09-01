@@ -177,16 +177,17 @@ class Door(object):
 	def door_opened(self):
 		self.l.info("Got door opened event")
 		
-		# Check to see if I sent something within the last 5 mins
+		# If there is a timer set, that means that I recently opened the door
+		# So don't spam texts. Reset timer and move on
 		if self.msg_timer != None:
 			self.l.debug("Msg pending already, ignore")
-			return
+			self.msg_timer.cancel()
 
-		# Record the time last opened if event is "new"
-		self.door_last_opened = time.time()
-
-		# Now send msg and set a msg timer so we don't send more messages
-		self.send_msg(Door.OPENED)
+		else:
+			# Record the time last opened if event is "new"
+			self.door_last_opened = time.time()
+			# Now send msg and set a msg timer so we don't send more messages
+			self.send_msg(Door.OPENED)
 
 		# Set a timer so we don't bother with repeated messages
 		quiet_time_in_secs = 300

@@ -61,7 +61,9 @@ if __name__ == "__main__":
 	valid_numbers = Set(['16509968841', '5184787802'])
 
 	# Send myself a message that we are starting up
-	GS.send_message("Starting up garagePi")
+	#GS.send_message("Starting up garagePi")
+	# Removed sep 1 2015 - moved to startup script so that I can ignore
+	# msg during nightly reboots
 
 	# everything is set up, now wait for messages and process them as needed
 	while keep_alive:
