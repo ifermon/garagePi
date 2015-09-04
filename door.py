@@ -93,7 +93,7 @@ class Door(object):
 			self.l.debug("10pm check, door opened.")
 
 		# Set a new timer for the next 10pm
-		self.n10pm_timer = Timer(self.secs_until_10pm(), self.n10pm_check)
+		self.n10pm_timer = Timer(GS.secs_until_10pm(), self.n10pm_check)
 		self.n10pm_timer.start()
 		self.l.debug("10pm door check finished for {0}".format(self.name))
 		return
