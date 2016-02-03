@@ -88,6 +88,7 @@ class Door(object):
 		Checks status of door, sends message if open, resets timer 
 	'''
 	def n10pm_check(self):
+		time.sleep(5) # Make sure we are past 10pm
 		if self.get_status() == Door.OPENED:
 			send_msg(Door.OPENED)
 			self.l.debug("10pm check, door opened.")
@@ -223,7 +224,10 @@ class Door(object):
 		else:
 			msg = "{0}'s door was closed at {1}".format(self.name,
 				time.ctime(time.time()))
-		GS.send_message(msg)
+		try:
+			GS.send_message(msg)
+		except:
+			self.l.debug("Failed sending message {1}".format(msg))
 		self.l.debug("Sent message '{0}'".format(msg))
 		return
 

@@ -126,7 +126,7 @@ class SMS_Monitor(MP.Process):
 		'''
 		@app.route("/send_message", methods=['GET', 'POST'])
 		def send_msg():
-			print("Got msg: {0}".format(request.args))
+			self.l.info("Got msg: {0}".format(request.args))
 			if request.args.has_key('msg'):
 				msg = request.args['msg']
 				GS.send_message(msg)
