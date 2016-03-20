@@ -13,7 +13,7 @@ import datetime
 import pytz
 import ephem
 
-LOG_DIR='/home/pi/garagePi/logs/'
+LOG_DIR='/home/garage/garagePi/logs/'
 
 eastern = pytz.timezone('US/Eastern')
 utc = pytz.timezone('UTC')
