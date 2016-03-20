@@ -12,7 +12,7 @@ import datetime as dt
 
 # Name for logger
 loggerName = "GaragePi"
-LOG_DIR = "/home/pi/garagePi/logs/"
+LOG_DIR = "/home/garage/garagePi/logs/"
 
 # Placeholder for lock
 lock = None
@@ -41,7 +41,7 @@ def is_dark():
 	
 # Utility function to send out an SMS message
 def send_message(msg):
-	# Your Account Sid and Auth Token from twilio.com/user/account
+	# Your Account Sid and Auth Token from plivo.com/user/account
 	account_id = myPlivo.auth_id
 	auth_token  = myPlivo.auth_token
 	# List of numbers to send message to
@@ -59,11 +59,11 @@ def send_message(msg):
 # Utility to configure a logger instance
 def configureLogger(name=loggerName):
 	l = logging.getLogger(name)
-	l.setLevel(logging.DEBUG)
+	l.setLevel(logging.INFO)
 	fh = logging.FileHandler("{0}{1}.log".format(LOG_DIR, name))
 	fh.setLevel(logging.INFO)
 	sh = logging.StreamHandler()
-	sh.setLevel(logging.DEBUG)
+	sh.setLevel(logging.INFO)
 	formatter = logging.Formatter("%(asctime)s %(message)s " +
 		"%(filename)s(%(lineno)s)")
 	#formatter = logging.Formatter("%(message)s |%(asctime)s|%(process)d" +
