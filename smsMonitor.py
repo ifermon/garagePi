@@ -11,7 +11,7 @@ import shelve
 import datetime
 import myPlivo
 
-LOG_DIR="/home/pi/garagePi/logs/"
+LOG_DIR="/home/garage/garagePi/logs/"
 	
 ###############################################################################
 """
