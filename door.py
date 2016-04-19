@@ -92,7 +92,7 @@ class Door(object):
         self.l.info("Starting 10pm check")
         time.sleep(5) # Make sure we are past 10pm
         if self.get_status() == Door.OPENED:
-            send_msg(Door.OPENED)
+            self.send_msg(Door.OPENED)
             self.l.debug("10pm check, door opened.")
 
         # Set a new timer for the next 10pm
