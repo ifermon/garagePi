@@ -1,29 +1,34 @@
-'''
-    This module controls all aspects of a garage door. It does the following:
-        open - open the door
-        close - close the door
-        get_status - returns status of door opened or door closed
-        sends change - sends a change in status message
-'''
 import garageShared as GS
 import multiprocessing as mp
 import os
 import time
 import RPi.GPIO as GPIO
 from threading import Timer
+import logging
 
 class Door(object):
+    '''
+        This module controls a garage door. It does the following:
+            open - open the door
+            close - close the door
+            get_status - returns status of door opened or door closed
+            sends change - sends a change in status message
+
+            OPENED is the status for garage door opened. Technically it means
+            that the signal pin cooresponding to the reed switch for the door
+            is an open circut, CLOSED is the opposite.
+    '''
     
     # Define class constants
     OPENED = 0
     CLOSED = 1
-    POWER_PIN = 24
+    POWER_PIN = 24 
 
-    '''
-        Utility method to get string versions of state
-        Default to value of current_state
-    '''
     def get_state_str(self, state=None):
+        '''
+            Utility method to get string versions of state
+            Default to value of current_state
+        '''
         if state == None:
             state = self.current_state
         if state == Door.OPENED:
@@ -32,19 +37,39 @@ class Door(object):
             ret_str = "Closed"
         return ret_str
 
-    '''
-        Initialize the door - set pins, set up logging, etc
-    '''
-    def __init__(self, open_close_state_pin, push_button_pin, name):
-        GS.lock.acquire()
+    def set_log_level(log_level=logging.INFO):
+        """ Set logging level for this door """
+        self.log_level = log_level
+        return
+
+    def __init__(self, open_close_state_pin, push_button_pin, door_name, 
+            resource_lock):
+        '''
+            Initialize the door - set pins, set up logging, etc
+            All pin numbering is in BCM mode
+            open_close_state_pin: the pin on the PI that indicates if the door
+              is closed or not closed (may be partially opened)
+            push_putting_pin: the pin on the PI that triggers the door
+            door_name: The name of this door. Used or messaging
+            resource_lock: a shared RLock that prevents contention from 
+              multiple doors
+        '''
+        self.lock = resource_lock
+        self.lock.acquire()
+
         # access the logger and set up logging
-        self.name = name
+        self.name = door_name
         self.open_close_state_pin = open_close_state_pin
         self.push_button_pin = push_button_pin
-        self.msg_pending = False
         self.msg_timer = None
         self.nag_timer = None
+
+        # Setup logging just for this door
         self.l = GS.getLogger(GS.loggerName)
+
+        # We're going to make a new logger just for us
+        #l = logging.getLogger(self.name)
+
 
         # Now set up the pins
         # Multiple processes are setting up pins, so supress warnings
@@ -73,7 +98,7 @@ class Door(object):
         self.n10pm_timer = Timer(GS.secs_until_10pm(), self.n10pm_check)
         self.n10pm_timer.start()
 
-        self.l.info("\n\tName: {0}\n".format(name) +
+        self.l.info("\n\tName: {0}\n".format(door_name) +
                 "\tProcess name: {0}\n".format(mp.current_process().name) +
                 "\tParent PID: {0}\n".format(os.getppid()) +
                 "\tPID: {0}\n".format(os.getpid()) +
@@ -82,13 +107,11 @@ class Door(object):
                 "\tSwitch pin: {0}\n".format(push_button_pin) +
                 "\tCurrent state {0}\n".format(self.get_state_str()))
 
-        GS.lock.release()
+        self.lock.release()
         return
 
-    '''
-        Checks status of door, sends message if open, resets timer 
-    '''
     def n10pm_check(self):
+        ''' Checks status of door, sends message if open, resets timer '''
         self.l.info("Starting 10pm check")
         time.sleep(5) # Make sure we are past 10pm
         if self.get_status() == Door.OPENED:
@@ -103,55 +126,51 @@ class Door(object):
         self.l.debug("10pm door check finished for {0}".format(self.name))
         return
         
-    '''
-        Get and set the current state of the door (open/close)
-    '''
     def get_status(self):
-        GS.lock.acquire()
+        ''' Get and set the current state of the door (open/close) '''
+        self.lock.acquire()
         self.current_state = GPIO.input(self.open_close_state_pin)
-        GS.lock.release()
+        self.lock.release()
         return self.current_state
 
-    '''
-        Press the door open/close switch
-    '''
     def press_button(self):
-        GS.lock.acquire()
+        ''' Press the door open/close switch '''
+        self.lock.acquire()
         self.l.info("Pushing button {0}'s door".format(self.name))
         GPIO.output(self.push_button_pin, GPIO.LOW)
         time.sleep(1)
         GPIO.output(self.push_button_pin, GPIO.HIGH)
-        GS.lock.release()
+        self.lock.release()
         return
 
-    '''
-        Public method that can be called from outside unsynched process
-        Locking handled by press_button and get state functions
-        Presses button to toggle door if door state is not already open
-    '''
     def open(self):
+        '''
+            Public method that can be called from outside unsynched process
+            Locking handled by press_button and get state functions
+            Presses button to toggle door if door state is not already open
+        '''
         if self.get_status() == Door.CLOSED:
             self.press_button()
         return
 
-    '''
-        Public method that can be called from outside unsynched process
-        Locking handled by press_button and get state functions
-        Presses button to toggle door if door state is not already closed
-    '''
     def close(self):
+        '''
+            Public method that can be called from outside unsynched process
+            Locking handled by press_button and get state functions
+            Presses button to toggle door if door state is not already closed
+        '''
         if self.get_status() == Door.OPENED:
             self.press_button()
         return
 
-    '''
-        This function is called when the reed switch senses a change 
-        (i.e. door closes or opens). It's possible that it gets false
-        alarms, so do a second check after waiting for the door to finish
-        moving.
-    '''
     def door_moving_callback(self, channel):
-        GS.lock.acquire()
+        '''
+            This function is called when the reed switch senses a change 
+            (i.e. door closes or opens). It's possible that it gets false
+            alarms, so do a second check after waiting for the door to finish
+            moving.
+        '''
+        self.lock.acquire()
         self.l.debug("Got a callback")
         # 20 secs should be enough time for the door to complete either
         # opening or closing, wait till it's done, this also helps us
@@ -171,15 +190,15 @@ class Door(object):
         else:
             self.l.debug("In callback, nothing changed")
 
-        GS.lock.release()
+        self.lock.release()
         self.l.debug("Done processing callback")
         return
 
-    '''
-        This function is called when the garage door is detected to have
-        opened. Sends a text message and logs event
-    '''
     def door_opened(self):
+        '''
+            This function is called when the garage door is detected to have
+            opened. Sends a text message and logs event
+        '''
         self.l.info("Got door opened event")
         
         # If there is a timer set, that means that I recently opened the door
@@ -200,10 +219,8 @@ class Door(object):
         self.msg_timer.start()
         return
 
-    '''
-        Clears the quiet time timer
-    '''
     def quiet_time_over(self):
+        ''' Clears the quiet time timer '''
         # Clear the msg timer 
         self.msg_timer = None
 
@@ -218,10 +235,8 @@ class Door(object):
         self.l.debug("Leaving quiet timer")
         return
 
-    '''
-        Sends a message via sms
-    '''
     def send_msg(self, event_type):
+        ''' Sends a message via sms '''
         if event_type == Door.OPENED:
             msg = "{0}'s door was opened at {1}".format(self.name,
                 time.ctime(self.door_last_opened))
@@ -235,10 +250,8 @@ class Door(object):
         self.l.debug("Sent message '{0}'".format(msg))
         return
 
-    '''
-        This is called when the timer goes off
-    '''
     def door_nag(self):
+        ''' This is called when the timer goes off '''
         # Clear the nag timer
         self.nag_timer = None
         
@@ -247,11 +260,11 @@ class Door(object):
         self.l.debug("Leaving nag timer")
         return
 
-    '''
-        This function is called when the garage door is detected to have
-        closed. 
-    '''
     def door_closed(self):
+        '''
+            This function is called when the garage door is detected to have
+            closed. 
+        '''
         self.l.info("Door closed")
         return
 
