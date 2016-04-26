@@ -63,6 +63,7 @@ class Door(object):
         self.push_button_pin = push_button_pin
         self.msg_timer = None
         self.nag_timer = None
+        self.event_notfication_lists = {"open": [], "nag": [], "timer": []}
 
         # Setup logging just for this door
         self.l = GS.getLogger(GS.loggerName)
@@ -266,6 +267,36 @@ class Door(object):
             closed. 
         '''
         self.l.info("Door closed")
+        return
+
+    def _sub_event(self, phone_number, event):
+        self.event_notification_list[event].append(phone_number)
+        return 
+
+    def sub_open_event(self, phone_number):
+        """ Add a phone number to be notified when door is opened """
+        self._sub_event(phone_number, "open")
+        return
+
+    def sub_nag_event(self, phone_number):
+        """ Add a phone number to be notified when door is opened 
+            more than nag minutes (set with set_nag_time)
+        """
+        self._sub_event(phone_number, "nag")
+        return
+
+    def sub_timer_event(self, phone_number):
+        """
+            Add a phone number to be notified when door is opened at
+            a particular time (set with set_timer_time)
+        """
+        self._sub_event(phone_number, "timer")
+        return
+
+    def set_timer_time(self, time):
+        return
+
+    def set_nag_time(self, minutes):
         return
 
 if __name__ == "__main__":
