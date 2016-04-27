@@ -5,6 +5,23 @@ import time
 import RPi.GPIO as GPIO
 from threading import Timer
 import logging
+#from constants_door import *
+
+# Define constants
+OPENED = 0 # Value of pin state when door is opened (circut open)
+CLOSED = 1 # Value of pin state when door is closed (circut closed)
+POWER_PIN = 24
+INITIAL_WAIT_TIME = 300 # Time in secs before first nag msg is sent when door is left opened
+REPEAT_WAIT_TIME = 1800 # Time in secs before repeat nag msg is sent
+TRANSITION_WAIT_TIME = 30 # Time in secs to wait for door operation to complete (open/close)
+
+# Events used for sending messages / publishing messages
+# Event values are also designed to be the message text - I know this is horrible but it's easy
+CLOSE_E = "{}'s door was closed at {}."
+OPEN_E = "{}'s door was opened at {}."
+TIMER_E = "{}'s door is still opened at {}."
+DOOR_CLOSING_ERROR_E = "Error closing {}'s door at {}."
+DOOR_OPENING_ERROR_E = "Error opening {}'s door at {}."
 
 class Door(object):
     '''
@@ -19,19 +36,17 @@ class Door(object):
             is an open circut, CLOSED is the opposite.
     '''
     
-    # Define class constants
-    OPENED = 0
-    CLOSED = 1
-    POWER_PIN = 24 
 
     def get_state_str(self, state=None):
         '''
             Utility method to get string versions of state
             Default to value of current_state
+            :param state:
+            :return: Returns string value of state (Opened or Closed).
         '''
         if state == None:
             state = self.current_state
-        if state == Door.OPENED:
+        if state == OPENED:
             ret_str = "Opened"
         else:
             ret_str = "Closed"
@@ -62,8 +77,8 @@ class Door(object):
         self.open_close_state_pin = open_close_state_pin
         self.push_button_pin = push_button_pin
         self.msg_timer = None
-        self.nag_timer = None
-        self.event_notfication_lists = {"open": [], "nag": [], "timer": []}
+        self.event_notification_list = {CLOSE_E: [], OPEN_E: [], TIMER_E: [],
+                                       DOOR_OPENING_ERROR_E: [], DOOR_CLOSING_ERROR_E: []}
 
         # Setup logging just for this door
         self.l = GS.getLogger(GS.loggerName)
@@ -81,8 +96,8 @@ class Door(object):
         #GPIO.setup(self.open_close_state_pin, GPIO.IN, initial=GPIO.LOW,
         GPIO.setup(self.open_close_state_pin, GPIO.IN, 
                 pull_up_down=GPIO.PUD_DOWN)
-        GPIO.setup(Door.POWER_PIN, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.output(Door.POWER_PIN, True)
+        GPIO.setup(POWER_PIN, GPIO.OUT, initial=GPIO.LOW)
+        GPIO.output(POWER_PIN, True)
 
         # Settings for relay switch (door switch)
         GPIO.setup(self.push_button_pin, GPIO.OUT, initial=GPIO.HIGH)
@@ -90,20 +105,18 @@ class Door(object):
         # Set a callback function, when it detects a change
         # this function will be called
         GPIO.add_event_detect(self.open_close_state_pin, GPIO.RISING,
-                callback = self.door_moving_callback, bouncetime=2000)
+                callback = self._door_moving_callback, bouncetime=2000)
 
         # Now get and set the current state of the door
         self.last_state = self.get_status()
-
-        # Add a timer to wake at 10pm and check the door
-        self.n10pm_timer = Timer(GS.secs_until_10pm(), self.n10pm_check)
-        self.n10pm_timer.start()
+        if self.last_state == OPENED:
+            self.msg_timer = Timer(INITIAL_WAIT_TIME, self._quiet_time_over)
 
         self.l.info("\n\tName: {0}\n".format(door_name) +
                 "\tProcess name: {0}\n".format(mp.current_process().name) +
                 "\tParent PID: {0}\n".format(os.getppid()) +
                 "\tPID: {0}\n".format(os.getpid()) +
-                "\tPower pin: {0}\n".format(Door.POWER_PIN) +
+                "\tPower pin: {0}\n".format(POWER_PIN) +
                 "\tSignal pin: {0}\n".format(open_close_state_pin) +
                 "\tSwitch pin: {0}\n".format(push_button_pin) +
                 "\tCurrent state {0}\n".format(self.get_state_str()))
@@ -111,22 +124,6 @@ class Door(object):
         self.lock.release()
         return
 
-    def n10pm_check(self):
-        ''' Checks status of door, sends message if open, resets timer '''
-        self.l.info("Starting 10pm check")
-        time.sleep(5) # Make sure we are past 10pm
-        if self.get_status() == Door.OPENED:
-            self.send_msg(Door.OPENED)
-            self.l.debug("10pm check, door opened.")
-
-        # Set a new timer for the next 10pm
-        self.l.info("Setting 10pm timer for {} secs from now.".format(
-                GS.secs_until_10pm()))
-        self.n10pm_timer = Timer(GS.secs_until_10pm(), self.n10pm_check)
-        self.n10pm_timer.start()
-        self.l.debug("10pm door check finished for {0}".format(self.name))
-        return
-        
     def get_status(self):
         ''' Get and set the current state of the door (open/close) '''
         self.lock.acquire()
@@ -137,11 +134,29 @@ class Door(object):
     def press_button(self):
         ''' Press the door open/close switch '''
         self.lock.acquire()
+        begin_state = self.get_status()
         self.l.info("Pushing button {0}'s door".format(self.name))
         GPIO.output(self.push_button_pin, GPIO.LOW)
         time.sleep(1)
         GPIO.output(self.push_button_pin, GPIO.HIGH)
         self.lock.release()
+
+        time.sleep(TRANSITION_WAIT_TIME)
+        if begin_state == CLOSED:
+            self.l.info("{}'s door is closed, opening it".format(self.name))
+            """ Door open will generate message, so no need to send another """
+            if self.get_status() == CLOSED:
+                """ Failed at opening door, send message """
+                self.send_msg(DOOR_OPENING_ERROR_E)
+        elif begin_state == OPENED:
+            """ Let's confirm that the door was closed"""
+            self.l.info("{}'s door is opened, closing it".format(self.name))
+            if self.get_status() != CLOSED:
+                self.l.err("{}'s door did not close as expected".format(self.name))
+                self.send_msg(DOOR_CLOSING_ERROR_E)
+            else: # Door closed as expected
+                self.l.debug("{}'s door closed after pressing button".format(self.name))
+                self.send_msg(CLOSE_E)
         return
 
     def open(self):
@@ -150,7 +165,7 @@ class Door(object):
             Locking handled by press_button and get state functions
             Presses button to toggle door if door state is not already open
         '''
-        if self.get_status() == Door.CLOSED:
+        if self.get_status() == CLOSED:
             self.press_button()
         return
 
@@ -160,11 +175,11 @@ class Door(object):
             Locking handled by press_button and get state functions
             Presses button to toggle door if door state is not already closed
         '''
-        if self.get_status() == Door.OPENED:
+        if self.get_status() == OPENED:
             self.press_button()
         return
 
-    def door_moving_callback(self, channel):
+    def _door_moving_callback(self, channel):
         '''
             This function is called when the reed switch senses a change 
             (i.e. door closes or opens). It's possible that it gets false
@@ -181,11 +196,11 @@ class Door(object):
         # Now see if the door state has changed
         self.get_status()
         if self.current_state != self.last_state:
-            if self.current_state == Door.OPENED:
-                self.door_opened()
+            if self.current_state == OPENED:
+                self._door_opened()
                 self.l.debug("In callback, door opened")
             else:
-                self.door_closed()
+                self._door_closed()
                 self.l.debug("In callback, door closed")
             self.last_state = self.current_state
         else:
@@ -195,78 +210,62 @@ class Door(object):
         self.l.debug("Done processing callback")
         return
 
-    def door_opened(self):
+    def _door_opened(self):
         '''
             This function is called when the garage door is detected to have
             opened. Sends a text message and logs event
         '''
         self.l.info("Got door opened event")
         
-        # If there is a timer set, that means that I recently opened the door
-        # So don't spam texts. Reset timer and move on
         if self.msg_timer != None:
-            self.l.debug("Msg pending already, ignore")
+            # This should never happen. We should have removed timer when closed
+            self.l.err("Door opened and we already have msg_timer - error of some kind")
             self.msg_timer.cancel()
-
         else:
             # Record the time last opened if event is "new"
             self.door_last_opened = time.time()
             # Now send msg and set a msg timer so we don't send more messages
-            self.send_msg(Door.OPENED)
+            self._send_msg(OPENED)
 
         # Set a timer so we don't bother with repeated messages
-        quiet_time_in_secs = 300
-        self.msg_timer = Timer(quiet_time_in_secs, self.quiet_time_over)
+        self.msg_timer = Timer(Door.INITIAL_WAIT_TIME, self._quiet_time_over)
         self.msg_timer.start()
         return
 
-    def quiet_time_over(self):
-        ''' Clears the quiet time timer '''
+    def _quiet_time_over(self):
+        ''' Clears the quiet time timer, checks to see if door is still opened, and sets another timer if it is '''
         # Clear the msg timer 
         self.msg_timer = None
 
         # Check to see if door is still opened, if so, set timer to check
         # again in 30 mins
-        if self.get_status() == Door.OPENED:
-            nag_time_in_secs = 1800
-            if self.nag_timer != None:
-                self.nag_timer.cancel()
-            self.nag_timer = Timer(nag_time_in_secs, self.door_nag )
-            self.nag_timer.start()
+        if self.get_status() == OPENED:
+            self.msg_timer = Timer(REPEAT_WAIT_TIME, self._quiet_time_over)
+            self.msg_timer.start()
         self.l.debug("Leaving quiet timer")
         return
 
-    def send_msg(self, event_type):
+    def _send_msg(self, event_type):
         ''' Sends a message via sms '''
-        if event_type == Door.OPENED:
-            msg = "{0}'s door was opened at {1}".format(self.name,
-                time.ctime(self.door_last_opened))
-        else:
-            msg = "{0}'s door was closed at {1}".format(self.name,
-                time.ctime(time.time()))
+        msg = event_type.format(self.name, time.ctime(self.door_last_opened))
         try:
-            GS.send_message(msg)
+            GS.send_message(msg, self.event_notification_list[event_type])
         except:
-            self.l.debug("Failed sending message {1}".format(msg))
+            self.l.err("Failed sending message {1}".format(msg))
         self.l.debug("Sent message '{0}'".format(msg))
         return
 
-    def door_nag(self):
-        ''' This is called when the timer goes off '''
-        # Clear the nag timer
-        self.nag_timer = None
-        
-        if self.get_status() == Door.OPENED:
-            GS.send_message("{0}'s door is still opened.".format(self.name))
-        self.l.debug("Leaving nag timer")
-        return
-
-    def door_closed(self):
+    def _door_closed(self):
         '''
             This function is called when the garage door is detected to have
             closed. 
         '''
         self.l.info("Door closed")
+        if self.msg_timer == None:
+            self.l.err("Door closed and no open msg_timer - should not happen")
+        else:
+            self.msg_timer.cancel()
+            self.msg_timer = None
         return
 
     def _sub_event(self, phone_number, event):
@@ -275,14 +274,12 @@ class Door(object):
 
     def sub_open_event(self, phone_number):
         """ Add a phone number to be notified when door is opened """
-        self._sub_event(phone_number, "open")
+        self._sub_event(phone_number, OPEN_E)
         return
 
-    def sub_nag_event(self, phone_number):
-        """ Add a phone number to be notified when door is opened 
-            more than nag minutes (set with set_nag_time)
-        """
-        self._sub_event(phone_number, "nag")
+    def sub_close_event(self, phone_number):
+        """ Add a phone number to be notified when door is closed"""
+        self._sub_event(phone_number, CLOSE_E)
         return
 
     def sub_timer_event(self, phone_number):
@@ -290,14 +287,15 @@ class Door(object):
             Add a phone number to be notified when door is opened at
             a particular time (set with set_timer_time)
         """
-        self._sub_event(phone_number, "timer")
+        self._sub_event(phone_number, TIMER_E)
         return
 
-    def set_timer_time(self, time):
+    def sub_door_error_event(self, phone_number):
+        """ Add phone number to be notified when door fails to open / close """
+        self._sub_event(phone_number, DOOR_CLOSING_ERROR_E)
+        self._sub_event(phone_number, DOOR_OPENING_ERROR_E)
         return
 
-    def set_nag_time(self, minutes):
-        return
 
 if __name__ == "__main__":
     pass

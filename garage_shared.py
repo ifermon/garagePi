@@ -40,12 +40,11 @@ def is_dark():
 	return (sunrise() < sunset())
 	
 # Utility function to send out an SMS message
-def send_message(msg):
+def send_message(msg, number_list=['+16509968841']):
 	# Your Account Sid and Auth Token from plivo.com/user/account
 	account_id = myPlivo.auth_id
 	auth_token  = myPlivo.auth_token
 	# List of numbers to send message to
-	number_list = ['+16509968841']
 	client = plivo.RestAPI(account_id, auth_token)
 	for n in number_list:
 		params = { 'src': myPlivo.number, 
