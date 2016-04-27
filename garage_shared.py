@@ -5,7 +5,7 @@
 from dateutil import tz
 import ephem
 import plivo
-import myPlivo
+import my_plivo
 import logging
 import sys
 import datetime as dt

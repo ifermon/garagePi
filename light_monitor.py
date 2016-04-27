@@ -5,8 +5,8 @@ from threading import Timer
 import datetime
 import os
 import sys
-import garageShared as GS
-import lightLevelLogging as LLL
+import garage_shared as GS
+import light_level_logging as LLL
 
 _addr_default = 0x23
 _trigger_value = 5

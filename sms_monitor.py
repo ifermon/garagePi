@@ -2,14 +2,14 @@ from flask import Flask, request, redirect
 import multiprocessing as MP
 import sys
 import os
-import garageShared as GS
+import garage_lhared as GS
 import plivo
 import base64
 import hmac
 import hashlib
 import shelve
 import datetime
-import myPlivo
+import my_plivo
 
 LOG_DIR="/home/garage/garagePi/logs/"
 	

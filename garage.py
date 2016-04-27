@@ -6,12 +6,12 @@
 '''
 from multiprocessing import RLock, Queue
 from Queue import Empty
-import garageShared as GS
+import garage_shared as GS
 from door import Door
 from sets import Set
 import time
-import smsMonitor as sms
-import lightMonitor
+import sms_monitor as sms
+import light_monitor
 import sys
 import yaml
 
