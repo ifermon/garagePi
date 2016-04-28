@@ -42,12 +42,12 @@ def is_dark():
 # Utility function to send out an SMS message
 def send_message(msg, number_list=['+16509968841']):
 	# Your Account Sid and Auth Token from plivo.com/user/account
-	account_id = myPlivo.auth_id
-	auth_token  = myPlivo.auth_token
+	account_id = my_plivo.auth_id
+	auth_token  = my_plivo.auth_token
 	# List of numbers to send message to
 	client = plivo.RestAPI(account_id, auth_token)
 	for n in number_list:
-		params = { 'src': myPlivo.number, 
+		params = { 'src': my_plivo.number, 
 				'dst': n, 
 				'text': msg, 
 				'type': 'sms', }
@@ -58,11 +58,11 @@ def send_message(msg, number_list=['+16509968841']):
 # Utility to configure a logger instance
 def configureLogger(name=loggerName):
 	l = logging.getLogger(name)
-	l.setLevel(logging.INFO)
+	l.setLevel(logging.DEBUG)
 	fh = logging.FileHandler("{0}{1}.log".format(LOG_DIR, name))
-	fh.setLevel(logging.INFO)
+	fh.setLevel(logging.DEBUG)
 	sh = logging.StreamHandler()
-	sh.setLevel(logging.INFO)
+	sh.setLevel(logging.DEBUG)
 	formatter = logging.Formatter("%(asctime)s %(message)s " +
 		"%(filename)s(%(lineno)s)")
 	#formatter = logging.Formatter("%(message)s |%(asctime)s|%(process)d" +

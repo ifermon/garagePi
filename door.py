@@ -5,6 +5,8 @@ import time
 import RPi.GPIO as GPIO
 from threading import Timer
 import logging
+import my_plivo
+import plivo
 #from constants_door import *
 
 # Define constants
@@ -111,6 +113,7 @@ class Door(object):
         self.last_state = self.get_status()
         if self.last_state == OPENED:
             self.msg_timer = Timer(INITIAL_WAIT_TIME, self._quiet_time_over)
+            self.door_last_opened = time.time()
 
         self.l.info("\n\tName: {0}\n".format(door_name) +
                 "\tProcess name: {0}\n".format(mp.current_process().name) +
@@ -147,16 +150,16 @@ class Door(object):
             """ Door open will generate message, so no need to send another """
             if self.get_status() == CLOSED:
                 """ Failed at opening door, send message """
-                self.send_msg(DOOR_OPENING_ERROR_E)
+                self._send_msg(DOOR_OPENING_ERROR_E)
         elif begin_state == OPENED:
             """ Let's confirm that the door was closed"""
             self.l.info("{}'s door is opened, closing it".format(self.name))
             if self.get_status() != CLOSED:
-                self.l.err("{}'s door did not close as expected".format(self.name))
-                self.send_msg(DOOR_CLOSING_ERROR_E)
+                self.l.error("{}'s door did not close as expected".format(self.name))
+                self._send_msg(DOOR_CLOSING_ERROR_E)
             else: # Door closed as expected
                 self.l.debug("{}'s door closed after pressing button".format(self.name))
-                self.send_msg(CLOSE_E)
+                self._send_msg(CLOSE_E)
         return
 
     def open(self):
@@ -219,16 +222,16 @@ class Door(object):
         
         if self.msg_timer != None:
             # This should never happen. We should have removed timer when closed
-            self.l.err("Door opened and we already have msg_timer - error of some kind")
+            self.l.error("Door opened and we already have msg_timer - error of some kind")
             self.msg_timer.cancel()
         else:
             # Record the time last opened if event is "new"
             self.door_last_opened = time.time()
             # Now send msg and set a msg timer so we don't send more messages
-            self._send_msg(OPENED)
+            self._send_msg(OPEN_E)
 
         # Set a timer so we don't bother with repeated messages
-        self.msg_timer = Timer(Door.INITIAL_WAIT_TIME, self._quiet_time_over)
+        self.msg_timer = Timer(INITIAL_WAIT_TIME, self._quiet_time_over)
         self.msg_timer.start()
         return
 
@@ -249,9 +252,23 @@ class Door(object):
         ''' Sends a message via sms '''
         msg = event_type.format(self.name, time.ctime(self.door_last_opened))
         try:
-            GS.send_message(msg, self.event_notification_list[event_type])
-        except:
-            self.l.err("Failed sending message {1}".format(msg))
+            # Your Account Sid and Auth Token from plivo.com/user/account
+            account_id = my_plivo.auth_id
+            auth_token  = my_plivo.auth_token
+            # List of numbers to send message to
+            client = plivo.RestAPI(account_id, auth_token)
+            number_list = self.event_notification_list[event_type]
+            self.l.debug("Sending msg to the following numbers: {}".format(
+                    ", ".join(map(str, number_list))))
+            for n in number_list:
+                    params = { 'src': my_plivo.number, 
+                                    'dst': n, 
+                                    'text': msg, 
+                                    'type': 'sms', }
+                    response = client.send_message(params)
+        except Exception as e:
+            self.l.error("Failed sending message {}".format(msg))
+            self.l.error(e)
         self.l.debug("Sent message '{0}'".format(msg))
         return
 
@@ -262,7 +279,7 @@ class Door(object):
         '''
         self.l.info("Door closed")
         if self.msg_timer == None:
-            self.l.err("Door closed and no open msg_timer - should not happen")
+            self.l.error("Door closed and no open msg_timer - should not happen")
         else:
             self.msg_timer.cancel()
             self.msg_timer = None

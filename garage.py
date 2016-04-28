@@ -10,8 +10,8 @@ import garage_shared as GS
 from door import Door
 from sets import Set
 import time
-import sms_monitor as sms
-import light_monitor
+import sms_monitor as SMS
+import light_monitor as LM
 import sys
 import yaml
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     q = Queue()
 
     # Trying to move configuration items into a config file
-    config = yaml.load("./config.yaml")
+    #config = yaml.load("./config.yaml")
 
     # Setup the indivdiual garage doors
     """
@@ -54,24 +54,25 @@ if __name__ == "__main__":
     heather_door.sub_door_error_event("6509968841")
 
     # Start the flask server so we can receive SMS messages
-    sms_listener = sms.SMS_Monitor(q, debug=False)
+    l.debug("Starting sms_listener")
+    sms_listener = SMS.SMS_Monitor(q, debug=False)
     sms_listener.daemon = True
     sms_listener.start()
     time.sleep(5)
+    l.debug("Started sms_listener")
 
     # Start the light monitor
-    light_monitor = lightMonitor.Light_Monitor(q)
+    l.debug("Starting light_monitor")
+    light_monitor = LM.Light_Monitor(q)
     light_monitor.daemon = True
     light_monitor.start()
     time.sleep(5)
+    l.debug("Started light_monitor")
     
 
     # This is our function map. Based on the type of message (which is just
     # the name of a class), call an associated function
-    f_map = {'DoorOpened': Door.door_opened,
-                    'DoorClosed': Door.door_closed,
-                    'status': ret_status,
-                    's': ret_status,
+    f_map = { 's': ret_status,
                     'i': ivan_door.press_button,
                     'h': heather_door.press_button}
     # Number map just gives a list of valid numbers for the from
@@ -85,12 +86,12 @@ if __name__ == "__main__":
     # everything is set up, now wait for messages and process them as needed
     while keep_alive:
             # wait until we get a message
-            #l.info("Waiting for message")
+            l.debug("Waiting for message")
             try:
                     msg = q.get(True, 10)
                     l.debug ("Recevied message <{0}>.".format(msg))
             except Empty:
-                    #l.info("Queue get timed out after waiting for a day")
+                    l.debug("Queue get timed out after waiting")
                     continue
 
             # We might be asked to shut down (e.g. in case of attempted hack)
@@ -106,7 +107,7 @@ if __name__ == "__main__":
                     continue
 
             # now process the message
-            msg_func = f_map.get(msg['Text'].lower(), None)
+            msg_func = f_map.get(msg['Text'].lower().strip(), None)
             if msg_func is not None:
                     msg_func()
             else:
