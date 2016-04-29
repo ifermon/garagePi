@@ -267,6 +267,7 @@ class Door(object):
                                     'text': msg, 
                                     'type': 'sms', }
                     response = client.send_message(params)
+                    self.l.debug("Got response: {}".format(response))
         except Exception as e:
             self.l.error("Failed sending message {}".format(msg))
             self.l.error(e)
