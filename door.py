@@ -80,14 +80,10 @@ class Door(object):
         self.push_button_pin = push_button_pin
         self.msg_timer = None
         self.event_notification_list = {CLOSE_E: [], OPEN_E: [], TIMER_E: [],
-                                       DOOR_OPENING_ERROR_E: [], DOOR_CLOSING_ERROR_E: []}
+                DOOR_OPENING_ERROR_E: [], DOOR_CLOSING_ERROR_E: []}
 
         # Setup logging just for this door
-        self.l = GS.getLogger(GS.loggerName)
-
-        # We're going to make a new logger just for us
-        #l = logging.getLogger(self.name)
-
+        self.l = logging.getLogger(door_name)
 
         # Now set up the pins
         # Multiple processes are setting up pins, so supress warnings
@@ -112,6 +108,7 @@ class Door(object):
         # Now get and set the current state of the door
         self.last_state = self.get_status()
         if self.last_state == OPENED:
+            self.l.info("Door already opened at startup")
             self.msg_timer = Timer(INITIAL_WAIT_TIME, self._quiet_time_over)
             self.door_last_opened = time.time()
 

@@ -10,6 +10,7 @@ import hashlib
 import shelve
 import datetime
 import const
+import logging
 
 LOG_DIR="/home/garage/garagePi/logs/"
     
@@ -26,8 +27,7 @@ class SMS_Monitor(MP.Process):
         self.queue = queue
         self.debug = debug
 
-        #self.l = GS.configureLogger("GaragePiFlaskLogger")
-        self.l = GS.getLogger()
+        self.l = logging.getLogger(__name__)
         self.l.info("Just configured logger")
 
         return
