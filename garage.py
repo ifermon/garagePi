@@ -88,7 +88,7 @@ if __name__ == "__main__":
             # wait until we get a message
             l.debug("Waiting for message")
             try:
-                    msg = q.get(True, 10)
+                    msg = q.get(True, 1800)
                     l.debug ("Recevied message <{0}>.".format(msg))
             except Empty:
                     l.debug("Queue get timed out after waiting")
