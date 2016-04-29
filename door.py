@@ -243,6 +243,7 @@ class Door(object):
         # Check to see if door is still opened, if so, set timer to check
         # again in 30 mins
         if self.get_status() == OPENED:
+            self._send_msg(TIMER_E)
             self.msg_timer = Timer(REPEAT_WAIT_TIME, self._quiet_time_over)
             self.msg_timer.start()
         self.l.debug("Leaving quiet timer")
