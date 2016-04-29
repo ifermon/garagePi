@@ -237,7 +237,8 @@ class Door(object):
 
     def _quiet_time_over(self):
         ''' Clears the quiet time timer, checks to see if door is still opened, and sets another timer if it is '''
-        # Clear the msg timer 
+        # Clear the msg timer
+        self.l.debug("Quiet time is over - send a message if door still open")
         self.msg_timer = None
 
         # Check to see if door is still opened, if so, set timer to check
@@ -252,6 +253,7 @@ class Door(object):
     def _send_msg(self, event_type):
         ''' Sends a message via sms '''
         msg = event_type.format(self.name, time.ctime(self.door_last_opened))
+        self.l.debug("Sending message '{0}'".format(msg))
         try:
             # Your Account Sid and Auth Token from plivo.com/user/account
             account_id = const.auth_id
@@ -271,7 +273,6 @@ class Door(object):
         except Exception as e:
             self.l.error("Failed sending message {}".format(msg))
             self.l.error(e)
-        self.l.debug("Sent message '{0}'".format(msg))
         return
 
     def _door_closed(self):
