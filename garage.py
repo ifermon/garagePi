@@ -14,6 +14,7 @@ import sms_monitor as SMS
 import light_monitor as LM
 import sys
 import yaml
+import const
 
 def ret_status():
     s1 = "Ivan's door is {0}.".format(ivan_door.get_state_str().lower())
@@ -47,12 +48,12 @@ if __name__ == "__main__":
     """
 
     ivan_door = Door(23,18,"Ivan",GS.lock)
-    ivan_door.sub_timer_event("+16509968841")
-    ivan_door.sub_door_error_event("+16509968841")
-    ivan_door.sub_open_event("+16509968841")
+    ivan_door.sub_timer_event(const.Ivan_cell)
+    ivan_door.sub_door_error_event(const.Ivan_cell)
+    ivan_door.sub_open_event(const.Ivan_cell)
     heather_door = Door(17, 22, "Heather",GS.lock)
-    heather_door.sub_timer_event("+16509968841")
-    heather_door.sub_door_error_event("+16509968841")
+    heather_door.sub_timer_event(const.Ivan_cell)
+    heather_door.sub_door_error_event(const.Ivan_cell)
 
     # Start the flask server so we can receive SMS messages
     l.debug("Starting sms_listener")
@@ -77,7 +78,7 @@ if __name__ == "__main__":
                     'i': ivan_door.press_button,
                     'h': heather_door.press_button}
     # Number map just gives a list of valid numbers for the from
-    valid_numbers = Set(['16509968841', '5184787802'])
+    valid_numbers = Set([const.Ivan_cell, const.Heather_cell])
 
     # Send myself a message that we are starting up
     #GS.send_message("Starting up garagePi")

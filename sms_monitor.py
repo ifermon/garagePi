@@ -9,7 +9,7 @@ import hmac
 import hashlib
 import shelve
 import datetime
-import my_plivo
+import const
 
 LOG_DIR="/home/garage/garagePi/logs/"
     
@@ -88,7 +88,7 @@ class SMS_Monitor(MP.Process):
                 signature = request.headers['X-Plivo-Signature']
                 self.l.debug("Checking signature hash is valid")
                 if not self.validate_signature(uri, request.form, signature, 
-                        my_plivo.auth_token):
+                        const.auth_token):
                     # This is very bad. It may mean that someone is trying to hack
                     # the system. Shut it down.
                     self.l.error("Invalid hash. Possible hack. Shutting down")

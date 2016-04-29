@@ -4,7 +4,7 @@
 __pycache__/
 *.py[cod]
 
-my_plivo.py
+const.py
 *.csv
 
 # C extensions

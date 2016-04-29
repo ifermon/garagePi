@@ -5,7 +5,7 @@
 from dateutil import tz
 import ephem
 import plivo
-import my_plivo
+import const
 import logging
 import sys
 import datetime as dt
@@ -42,12 +42,12 @@ def is_dark():
 # Utility function to send out an SMS message
 def send_message(msg, number_list=['+16509968841']):
 	# Your Account Sid and Auth Token from plivo.com/user/account
-	account_id = my_plivo.auth_id
-	auth_token  = my_plivo.auth_token
+	account_id = const.auth_id
+	auth_token  = const.auth_token
 	# List of numbers to send message to
 	client = plivo.RestAPI(account_id, auth_token)
 	for n in number_list:
-		params = { 'src': my_plivo.number, 
+		params = { 'src': const.number, 
 				'dst': n, 
 				'text': msg, 
 				'type': 'sms', }

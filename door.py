@@ -5,7 +5,7 @@ import time
 import RPi.GPIO as GPIO
 from threading import Timer
 import logging
-import my_plivo
+import const
 import plivo
 #from constants_door import *
 
@@ -254,15 +254,15 @@ class Door(object):
         msg = event_type.format(self.name, time.ctime(self.door_last_opened))
         try:
             # Your Account Sid and Auth Token from plivo.com/user/account
-            account_id = my_plivo.auth_id
-            auth_token  = my_plivo.auth_token
+            account_id = const.auth_id
+            auth_token  = const.auth_token
             # List of numbers to send message to
             client = plivo.RestAPI(account_id, auth_token)
             number_list = self.event_notification_list[event_type]
             self.l.debug("Sending msg to the following numbers: {}".format(
                     ", ".join(map(str, number_list))))
             for n in number_list:
-                    params = { 'src': my_plivo.number, 
+                    params = { 'src': const.number, 
                                     'dst': n, 
                                     'text': msg, 
                                     'type': 'sms', }
