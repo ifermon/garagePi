@@ -13,8 +13,8 @@ import time
 import sms_monitor as SMS
 import light_monitor as LM
 import sys
-import yaml
 import const
+import logging
 
 def ret_status():
     s1 = "Ivan's door is {0}.".format(ivan_door.get_state_str().lower())
@@ -31,7 +31,8 @@ if __name__ == "__main__":
 
     # get things set up
     keep_alive = True
-    l = GS.configureLogger(GS.loggerName)
+    GS.configure_logging()
+    l = logging.getLogger(__name__)
     l.info("Just configured logger")
     GS.lock = RLock()
     q = Queue()

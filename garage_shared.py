@@ -56,17 +56,15 @@ def send_message(msg, number_list=['+16509968841']):
 
 
 # Utility to configure a logger instance
-def configureLogger(name=loggerName):
-	l = logging.getLogger(name)
-	l.setLevel(logging.DEBUG)
+def configure_logging()
+	l = logging.getLogger()
+	l.setLevel(logging.INFO)
 	fh = logging.FileHandler("{0}{1}.log".format(LOG_DIR, name))
-	fh.setLevel(logging.DEBUG)
+	fh.setLevel(logging.INFO)
 	sh = logging.StreamHandler()
 	sh.setLevel(logging.DEBUG)
-	formatter = logging.Formatter("%(asctime)s %(message)s " +
-		"%(filename)s(%(lineno)s)")
-	#formatter = logging.Formatter("%(message)s |%(asctime)s|%(process)d" +
-	#"|%(thread)d|%(lineno)s|%(filename)s", "%y%m%d|%H%M%S")
+	formatter = logging.Formatter(datefmt="%a %y%m%d%z %H%M%S",
+			format="%(asctime)-22s %(levelname)-8s%(name)-8s %(message)s [%(filename)s@%(lineno)s]")
 	fh.setFormatter(formatter)
 	sh.setFormatter(formatter)
 	l.addHandler(fh)
