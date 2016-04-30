@@ -150,18 +150,18 @@ class Door(object):
         if begin_state == CLOSED:
             if self.get_status() == CLOSED:
                 """ Failed at opening door, send message """
-                self._send_msg(DOOR_OPENING_ERROR_E.format(self.name, time.time()))
+                self._send_msg(DOOR_OPENING_ERROR_E)
             else:
                 self.l.info("{}'s door was closed, we opened it".format(self.name))
-                self._send_msg(BUTTON_OPEN_E.format(self.name))
+                self._send_msg(BUTTON_OPEN_E)
         elif begin_state == OPENED:
             """ Let's confirm that the door was closed"""
             if self.get_status() != CLOSED:
                 self.l.error("{}'s door did not close as expected".format(self.name))
-                self._send_msg(DOOR_CLOSING_ERROR_E.format(self.name, time.time()))
+                self._send_msg(DOOR_CLOSING_ERROR_E)
             else: # Door closed as expected
                 self.l.debug("{}'s door closed after pressing button".format(self.name))
-                self._send_msg(BUTTON_CLOSE_E.format(self.name))
+                self._send_msg(BUTTON_CLOSE_E)
         return
 
     def open(self):
@@ -230,7 +230,7 @@ class Door(object):
             # Record the time last opened if event is "new"
             self.door_last_opened = time.time()
             # Now send msg and set a msg timer so we don't send more messages
-            self._send_msg(OPEN_E.format(self.name, self.door_last_opened))
+            self._send_msg(OPEN_E)
 
         # Set a timer so we don't bother with repeated messages
         self.msg_timer = Timer(INITIAL_WAIT_TIME, self._quiet_time_over)
@@ -246,14 +246,34 @@ class Door(object):
         # Check to see if door is still opened, if so, set timer to check
         # again in 30 mins
         if self.get_status() == OPENED:
-            self._send_msg(TIMER_E.format(self.name, time.time()))
+            self._send_msg(TIMER_E)
             self.msg_timer = Timer(REPEAT_WAIT_TIME, self._quiet_time_over)
             self.msg_timer.start()
         self.l.debug("Leaving quiet timer")
         return
 
-    def _send_msg(self, msg):
+    def _get_event_msg(self, event_type):
+        now = time.ctime(time.time())
+        dlo = time.ctime(self.door_last_opened)
+        if event_type == TIMER_E:
+            ret_str = TIMER_E.format(self.name, now)
+        elif event_type == DOOR_OPENING_ERROR_E:
+            ret_str = DOOR_OPENING_ERROR_E.format(self.name, now)
+        elif event_type == BUTTON_OPEN_E:
+            ret_str = BUTTON_OPEN_E.format(self.name)
+        elif event_type == DOOR_CLOSING_ERROR_E:
+            ret_str = DOOR_CLOSING_ERROR_E.format(self.name, now)
+        elif event_type == BUTTON_CLOSE_E:
+            ret_str = BUTTON_CLOSE_E.format(self.name)
+        elif event_type == OPEN_E:
+            ret_str = OPEN_E.format(self.name, dlo)
+        else:
+            ret_str = "Invalid event"
+        return ret_str
+
+    def _send_msg(self, event_type):
         ''' Sends a message via sms '''
+        msg = self._get_event_msg(event_type)
         self.l.debug("Sending message '{0}'".format(msg))
         try:
             # Your Account Sid and Auth Token from plivo.com/user/account
