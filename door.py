@@ -24,6 +24,8 @@ OPEN_E = "{}'s door was opened at {}."
 TIMER_E = "{}'s door is still opened at {}."
 DOOR_CLOSING_ERROR_E = "Error closing {}'s door at {}."
 DOOR_OPENING_ERROR_E = "Error opening {}'s door at {}."
+BUTTON_CLOSE_E = "Confirming {}'s door closed."
+BUTTON_OPEN_E = "Confirming {}'s door opened."
 
 class Door(object):
     '''
@@ -80,10 +82,12 @@ class Door(object):
         self.push_button_pin = push_button_pin
         self.msg_timer = None
         self.event_notification_list = {CLOSE_E: [], OPEN_E: [], TIMER_E: [],
+                BUTTON_OPEN_E: [], BUTTON_CLOSE_E: [],
                 DOOR_OPENING_ERROR_E: [], DOOR_CLOSING_ERROR_E: []}
 
         # Setup logging just for this door
         self.l = logging.getLogger(door_name)
+        self.l.setLevel(logging.DEBUG)
 
         # Now set up the pins
         # Multiple processes are setting up pins, so supress warnings
@@ -143,20 +147,20 @@ class Door(object):
 
         time.sleep(TRANSITION_WAIT_TIME)
         if begin_state == CLOSED:
-            self.l.info("{}'s door is closed, opening it".format(self.name))
-            """ Door open will generate message, so no need to send another """
             if self.get_status() == CLOSED:
                 """ Failed at opening door, send message """
                 self._send_msg(DOOR_OPENING_ERROR_E)
+            else:
+                self.l.info("{}'s door was closed, we opened it".format(self.name))
+                self._send_msg(BUTTON_OPEN_E)
         elif begin_state == OPENED:
             """ Let's confirm that the door was closed"""
-            self.l.info("{}'s door is opened, closing it".format(self.name))
             if self.get_status() != CLOSED:
                 self.l.error("{}'s door did not close as expected".format(self.name))
                 self._send_msg(DOOR_CLOSING_ERROR_E)
             else: # Door closed as expected
                 self.l.debug("{}'s door closed after pressing button".format(self.name))
-                self._send_msg(CLOSE_E)
+                self._send_msg(BUTTON_CLOSE_E)
         return
 
     def open(self):
@@ -311,6 +315,12 @@ class Door(object):
         """ Add phone number to be notified when door fails to open / close """
         self._sub_event(phone_number, DOOR_CLOSING_ERROR_E)
         self._sub_event(phone_number, DOOR_OPENING_ERROR_E)
+        return
+
+    def sub_door_button_event(self, phone_number):
+        """ Add phone number to be notified when door button is pressed via sms """
+        self._sub_event(phone_number, BUtTON_CLOSE_E)
+        self._sub_event(phone_number, BUTTON_OPEN_E)
         return
 
 

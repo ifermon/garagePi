@@ -52,9 +52,11 @@ if __name__ == "__main__":
     ivan_door.sub_timer_event(const.Ivan_cell)
     ivan_door.sub_door_error_event(const.Ivan_cell)
     ivan_door.sub_open_event(const.Ivan_cell)
+    ivan_door.sub_door_button_event(const.Ivan_cell)
     heather_door = Door(17, 22, "Heather",GS.lock)
     heather_door.sub_timer_event(const.Ivan_cell)
     heather_door.sub_door_error_event(const.Ivan_cell)
+    heather_door.sub_door_button_event(const.Ivan_cell)
 
     # Start the flask server so we can receive SMS messages
     l.debug("Starting sms_listener")
@@ -79,7 +81,7 @@ if __name__ == "__main__":
                     'i': ivan_door.press_button,
                     'h': heather_door.press_button}
     # Number map just gives a list of valid numbers for the from
-    valid_numbers = Set([const.Ivan_cell, const.Heather_cell])
+    valid_numbers = Set([const.Ivan_cell[1:], const.Heather_cell[1:]])
 
     # Send myself a message that we are starting up
     #GS.send_message("Starting up garagePi")
