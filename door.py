@@ -114,6 +114,7 @@ class Door(object):
         if self.last_state == OPENED:
             self.l.info("Door already opened at startup")
             self.msg_timer = Timer(INITIAL_WAIT_TIME, self._quiet_time_over)
+            self.msg_timer.start()
             self.door_last_opened = time.time()
 
         self.l.info("\n\tName: {0}\n".format(door_name) +
@@ -319,7 +320,7 @@ class Door(object):
 
     def sub_door_button_event(self, phone_number):
         """ Add phone number to be notified when door button is pressed via sms """
-        self._sub_event(phone_number, BUtTON_CLOSE_E)
+        self._sub_event(phone_number, BUTTON_CLOSE_E)
         self._sub_event(phone_number, BUTTON_OPEN_E)
         return
 
