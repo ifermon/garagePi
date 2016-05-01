@@ -63,10 +63,12 @@ def configure_logging():
     fh.setLevel(logging.INFO)
     sh = logging.StreamHandler()
     sh.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(datefmt="%a %y%m%d%z %H%M%S",
+    # Don't need timestand on stream formatter
+    shformatter = logging.Formatter(fmt="%(levelname)-8s%(name)-8s %(message)s [%(filename)s@%(lineno)s]")
+    fhformatter = logging.Formatter(datefmt="%a %y%m%d%z %H%M%S",
             fmt="%(asctime)-22s %(levelname)-8s%(name)-8s %(message)s [%(filename)s@%(lineno)s]")
-    fh.setFormatter(formatter)
-    sh.setFormatter(formatter)
+    fh.setFormatter(fhformatter)
+    sh.setFormatter(shformatter)
     l.addHandler(fh)
     l.addHandler(sh)
     l.info("Initializing with python version <{0}>".format(
