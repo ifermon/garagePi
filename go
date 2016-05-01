@@ -14,8 +14,14 @@ fi
 
 # Put in a little delay before we start, gives us time to shut things down if
 # we are getting repeated reboots
-echo "$(date): Starting up ... going to sleep for 30 seconds"
-sleep 30
+# For quick restarts, only sleep if .nosleep does not exist
+# in our bashrc file, the reload alias automatically creates and deletes .nosleep
+if [ -f ${HOME_DIR}/.nosleep ]; then
+    echo "${HOME_DIR}/.nosleep exists, skipping sleep delay"
+else
+    echo "$(date): Starting up ... going to sleep for 30 seconds"
+    sleep 30
+fi
 
 # cd to my working directory and setup virtualenv
 date
