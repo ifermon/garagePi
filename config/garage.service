@@ -1,0 +1,16 @@
+[Unit]
+Description=Monitors Garage Door
+# For instructions on setting this up in a new system see below comments
+# sudo cp garage.service /etc/systemd/system/garage.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable garage.service
+# sudo systemctl start garage.service
+# To see logs: sudo journalctl --unit=garage
+#
+
+[Service]
+Type=simple
+ExecStart=/home/garage/garagePi/go
+
+[Install]
+WantedBy=multi-user.target

@@ -26,7 +26,8 @@ echo "PWD = $(pwd)"
 date
 
 echo "Starting garage.py"
-sudo ${BASE_DIR}/venv/bin/python ${BASE_DIR}/garage.py >> ${BASE_DIR}/logs/go.out 2>&1 &
+#sudo ${BASE_DIR}/venv/bin/python ${BASE_DIR}/garage.py >> ${BASE_DIR}/logs/go.out 2>&1 &
+${BASE_DIR}/venv/bin/python ${BASE_DIR}/garage.py 
 
 # Send msg re: restart if it's not a crontab reboot
 if [ -f /home/pi/garage/cronboot ]; then
