@@ -149,13 +149,7 @@ if __name__ == "__main__":
     """
 
     ivan_door = Door(23,18,"Ivan",GS.lock)
-    ivan_door.sub_timer_event(const.Ivan_cell)
-    ivan_door.sub_error_event(const.Ivan_cell)
-    ivan_door.sub_button_event(const.Ivan_cell)
     heather_door = Door(17, 22, "Heather",GS.lock)
-    heather_door.sub_timer_event(const.Ivan_cell)
-    heather_door.sub_error_event(const.Ivan_cell)
-    heather_door.sub_button_event(const.Ivan_cell)
 
     # Start the flask server so we can receive SMS messages
     l.debug("Starting sms_listener")

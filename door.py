@@ -97,8 +97,8 @@ class Door(object):
             for k in e:
                 self.event_notification_list[k] = []
         else: # Log the loaded preferences
+            self.l.info("Preferences for {}'s door:".format(self.name))
             for k, v in self.event_notification_list.iteritems():
-                self.l.info("Preferences for {}'s door:".format(self.name))
                 self.l.info("{}: {}".format(k, v))
 
         # Now set up the pins
