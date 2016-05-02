@@ -136,6 +136,13 @@ class Door(object):
         self.lock.release()
         return self.current_state
 
+    def snooze_timer(self, from_number, cmds):
+        ''' Either cancel or snooze the timer'''
+        self.lock.acquire()
+        if self.msg_timer is None:
+            self.lock.release
+        return
+
     def press_button(self, from_number, cmds):
         ''' Press the door open/close switch '''
         self.lock.acquire()

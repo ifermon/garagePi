@@ -23,7 +23,7 @@ def help_text(from_number, cmds):
     """ Respond with the list of valid commands """
     ret_str = ("s, i, h"
                "[un]sub [i/h] [timer/open/close/error]"
-               "si/sh")
+               "si/sh [# minutes (optional)")
     GS.send_message(ret_str)
     GS.send_message(from_number)
     return
