@@ -45,7 +45,7 @@ def subscribe(from_number, cmds):
     """
     door = _get_door(cmds[1])
     if door == None:
-        GS.send_message("Invalid door name.", [from_number,])
+        GS.send_message("Invalid door name '{}'. Use i or h.".format(cmds[1]), [from_number,])
         return
     return
 
