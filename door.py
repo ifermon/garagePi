@@ -292,9 +292,10 @@ class Door(object):
             number_list = self.event_notification_list[event_type]
             self.l.debug("Sending msg to the following numbers: {}".format(
                     ", ".join(map(str, number_list))))
+            # All send numbers must be prefixed by a +
             for n in number_list:
                     params = { 'src': const.number, 
-                                    'dst': n, 
+                                    'dst': "+" + n,
                                     'text': msg, 
                                     'type': 'sms', }
                     response = client.send_message(params)

@@ -19,16 +19,34 @@ import logging
     TO DO: Respond to texts to the number that it came from for help and status
 """
 
+def _get_door(door_abbr):
+    door = None
+    if cmds[1] == "i":
+        door = ivan_door
+    elif cmds[1] == "h":
+        door = heather_door
+    else:
+        l.error("Unknown door abbreviation: {}".format(cmds))
+    return door
+
 def help_text(from_number, cmds):
     """ Respond with the list of valid commands """
     ret_str = ("s, i, h"
-               "[un]sub [i/h] [timer/open/close/error]"
+               "[un]sub [i/h] [timer/open/close/error/button]"
                "si/sh [# minutes (optional)")
     GS.send_message(ret_str)
     GS.send_message(from_number)
     return
 
 def subscribe(from_number, cmds):
+    """
+        Subscribe from events for user
+        sub door_name event_type
+    """
+    door = _get_door(cmds[1])
+    if door == None:
+        GS.send_message("Invalid door name.", [from_number,])
+        return
     return
 
 def unsubscribe(from_number, cmds):
@@ -74,7 +92,6 @@ if __name__ == "__main__":
     ivan_door = Door(23,18,"Ivan",GS.lock)
     ivan_door.sub_timer_event(const.Ivan_cell)
     ivan_door.sub_door_error_event(const.Ivan_cell)
-    ivan_door.sub_open_event(const.Ivan_cell)
     ivan_door.sub_door_button_event(const.Ivan_cell)
     heather_door = Door(17, 22, "Heather",GS.lock)
     heather_door.sub_timer_event(const.Ivan_cell)
@@ -109,9 +126,7 @@ if __name__ == "__main__":
              'i': ivan_door.press_button,
              'h': heather_door.press_button}
     # Number map just gives a list of valid numbers for the from
-    # Numbers much have a '+' prepended during send, but not when receiving
-    # hence we cut off the leading '+'
-    valid_numbers = Set([const.Ivan_cell[1:], const.Heather_cell[1:]])
+    valid_numbers = Set([const.Ivan_cell, const.Heather_cell])
 
     # everything is set up, now wait for messages and process them as needed
     while keep_alive:
