@@ -21,9 +21,9 @@ import logging
 
 def _get_door(door_abbr):
     door = None
-    if cmds[1] == "i":
+    if door_abbr == "i":
         door = ivan_door
-    elif cmds[1] == "h":
+    elif door_abbr == "h":
         door = heather_door
     else:
         l.error("Unknown door abbreviation: {}".format(cmds))
