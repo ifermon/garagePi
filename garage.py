@@ -23,7 +23,7 @@ def list_current_subscriptions(from_number, cmds):
     msg_str = "You'll be notified of the following events:\n"
     for d in ivan_door, heather_door:
         e_str = "{}'s door:\n".format(d.name)
-        e_check = e_str.len() # We'll check for changes later
+        e_check = len(e_str) # We'll check for changes later
         if d.is_sub_open_event(from_number):
             e_str += " - When the door opens\n"
         if d.is_sub_close_event(from_number):
