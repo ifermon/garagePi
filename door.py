@@ -136,7 +136,7 @@ class Door(object):
         self.lock.release()
         return self.current_state
 
-    def press_button(self):
+    def press_button(self, from_number, cmds):
         ''' Press the door open/close switch '''
         self.lock.acquire()
         begin_state = self.get_status()

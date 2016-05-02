@@ -15,8 +15,31 @@ import light_monitor as LM
 import sys
 import const
 import logging
+"""
+    TO DO: Respond to texts to the number that it came from for help and status
+"""
 
-def ret_status():
+def help_text(from_number, cmds):
+    """ Respond with the list of valid commands """
+    ret_str = ("s, i, h"
+               "[un]sub [i/h] [timer/open/close/error]"
+               "si/sh")
+    GS.send_message(ret_str)
+    GS.send_message(from_number)
+    return
+
+def subscribe(from_number, cmds):
+    return
+
+def unsubscribe(from_number, cmds):
+    """
+        Unsubscribe from events for user
+        unsub door_name event_type
+    """
+    return
+
+def ret_status(from_number, cmds):
+    """ Build the status message to send back to texter """
     s1 = "Ivan's door is {0}.".format(ivan_door.get_state_str().lower())
     s2 = "Heather's door is {0}.".format(heather_door.get_state_str().lower())
     if GS.is_dark() == True: # i.e. it's night time
@@ -78,15 +101,17 @@ if __name__ == "__main__":
     # This is our function map. Based on the type of message (which is just
     # the name of a class), call an associated function
     f_map = { 's': ret_status,
-                    'i': ivan_door.press_button,
-                    'h': heather_door.press_button}
+             'help': help_text,
+              'sub': subscribe,
+              'unsub': unsubscribe,
+              'si': ivan_door.snooze_timer,
+              'sh': heather_door.snooze_timer,
+             'i': ivan_door.press_button,
+             'h': heather_door.press_button}
     # Number map just gives a list of valid numbers for the from
+    # Numbers much have a '+' prepended during send, but not when receiving
+    # hence we cut off the leading '+'
     valid_numbers = Set([const.Ivan_cell[1:], const.Heather_cell[1:]])
-
-    # Send myself a message that we are starting up
-    #GS.send_message("Starting up garagePi")
-    # Removed sep 1 2015 - moved to startup script so that I can ignore
-    # msg during nightly reboots
 
     # everything is set up, now wait for messages and process them as needed
     while keep_alive:
@@ -112,9 +137,10 @@ if __name__ == "__main__":
                     continue
 
             # now process the message
-            msg_func = f_map.get(msg['Text'].lower().strip(), None)
+            cmd_str = msg['Text'].lower().strip().split()
+            msg_func = f_map.get(cmd_str[0])
             if msg_func is not None:
-                    msg_func()
+                    msg_func(msg['From'], cmd_str)
             else:
                     GS.send_message("I don't know that command. Sorry.")
                     l.info("Unknown msg <{0}>".format(msg))
