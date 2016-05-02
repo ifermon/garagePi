@@ -84,8 +84,11 @@ class Door(object):
         self.open_close_state_pin = open_close_state_pin
         self.push_button_pin = push_button_pin
         self.msg_timer = None
-        pref_file_name = const.door_pref_dir + "./door_preferences_" + self.name
+
+        # Load any previous preferences for subscriptions
+        pref_file_name = const.door_pref_dir + "/.door_preferences_" + self.name
         self.l.debug ("Preference file name: {}".format(pref_file_name))
+
         self.event_notification_list = shelve.open(pref_file_name, writeback=True)
 
         # If this is the first time then load empty notification lists
@@ -96,10 +99,8 @@ class Door(object):
                 self.event_notification_list[k] = []
 
 
-        # Load any previous preferences for subscriptions
 
-
-        # Now set up the pins
+        # Now set up the pinst
         # Multiple processes are setting up pins, so supress warnings
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
