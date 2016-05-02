@@ -7,7 +7,7 @@ from threading import Timer
 import logging
 import const
 import plivo
-#from constants_door import *
+import shelve
 
 # Define constants
 OPENED = 0 # Value of pin state when door is opened (circut open)
@@ -40,7 +40,6 @@ class Door(object):
             is an open circut, CLOSED is the opposite.
     '''
     
-
     def get_state_str(self, state=None):
         '''
             Utility method to get string versions of state
@@ -81,13 +80,22 @@ class Door(object):
         self.open_close_state_pin = open_close_state_pin
         self.push_button_pin = push_button_pin
         self.msg_timer = None
-        self.event_notification_list = {CLOSE_E: [], OPEN_E: [], TIMER_E: [],
-                BUTTON_OPEN_E: [], BUTTON_CLOSE_E: [],
-                DOOR_OPENING_ERROR_E: [], DOOR_CLOSING_ERROR_E: []}
+        pref_file_name = const.door_pref_dir + "./door_preferences_" + self.name
+        self.event_notification_list = shelve.open(pref_file_name, writeback=True)
+
+        # If this is the first time then load empty notification lists
+        if CLOSE_E not in self.event_notification_list:
+            e = [CLOSE_E, OPEN_E, TIMER_E, BUTTON_OPEN_E, BUTTON_CLOSE_E,
+                    DOOR_OPENING_ERROR_E, DOOR_CLOSING_ERROR_E]
+            for k in e:
+                self.event_notification_list[k] = []
 
         # Setup logging just for this door
         self.l = logging.getLogger(door_name)
         self.l.setLevel(logging.DEBUG)
+
+        # Load any previous preferences for subscriptions
+
 
         # Now set up the pins
         # Multiple processes are setting up pins, so supress warnings
@@ -320,6 +328,7 @@ class Door(object):
 
     def _sub_event(self, phone_number, event):
         self.event_notification_list[event].append(phone_number)
+        self.event_notification_list.sync()
         return 
 
     def sub_open_event(self, phone_number):
@@ -356,6 +365,7 @@ class Door(object):
         """ Remove phone number from notifications """
         if phone_number in self.event_notification_list[event]:
             self.event_notification_list[event].remove(phone_number)
+            self.event_notification_list.sync()
         return
 
     def unsub_button_event(self, phone_number):
@@ -385,6 +395,29 @@ class Door(object):
         self._unsub_event(self, phone_number, OPEN_E)
         return
 
+    def is_sub_open_event(self, phone_number):
+        """ Return true if phone number is subscribed """
+        return phone_number in self.event_notification_list[OPEN_E]
+
+    def is_sub_close_event(self, phone_number):
+        """ Return true if phone number is subscribed """
+        return phone_number in self.event_notification_list[CLOSE_E]
+
+    def is_sub_error_event(self, phone_number):
+        """ Return true if phone number is subscribed to either error type """
+        ret_val = (phone_number in self.event_notification_list[DOOR_CLOSING_ERROR_E] or
+                phone_number in self.event_notification_list[DOOR_OPENING_ERROR_E])
+        return ret_val
+
+    def is_sub_timer_event(self, phone_number):
+        """ Return true if phone number is subscribed """
+        return phone_number in self.event_notification_list[TIMER_E]
+
+    def is_sub_button_event(self, phone_number):
+        """ Return true if phone number is subscribed to either button event """
+        ret_val = (phone_number in self.event_notification_list[BUTTON_CLOSE_E] or
+                phone_number in self.event_notification_list[BUTTON_OPEN_E])
+        return ret_val
 
 if __name__ == "__main__":
     pass

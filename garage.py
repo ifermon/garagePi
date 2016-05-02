@@ -19,6 +19,29 @@ import logging
     TO DO: Respond to texts to the number that it came from for help and status
 """
 
+def list_current_subscriptions(from_number, cmds):
+    msg_str = "You'll be notified of the following events:\n"
+    for d in ivan_door, heather_door:
+        e_str = "{}'s door:\n".format(d.name)
+        e_check = e_str.len() # We'll check for changes later
+        if d.is_sub_open_event(from_number):
+            e_str += " - When the door opens\n"
+        if d.is_sub_close_event(from_number):
+            e_str += " - When the door closes\n"
+        if d.is_sub_timer_event(from_number):
+            e_str += " - When the door is left open\n"
+        if d.is_sub_button_event(from_number):
+            e_str += " - After you've requested it to open/close\n"
+        if d.is_sub_error_event(from_number):
+            e_str += " - If there is an error\n"
+        if e_str.len() == e_check:
+            # You are not subscribed to anything for this door
+            msg_str += "Nothing for {}'s door.\n".format(d.name)
+        else:
+            msg_str += e_str
+    GS.send_message(msg_str, [from_number,])
+    return
+
 def _get_door(door_abbr):
     door = None
     if door_abbr == "i":
@@ -157,6 +180,7 @@ if __name__ == "__main__":
              'help': help_text,
               'sub': subscribe,
               'unsub': unsubscribe,
+              'list': list_current_subscriptions,
               'si': ivan_door.snooze_timer,
               'sh': heather_door.snooze_timer,
              'i': ivan_door.press_button,
