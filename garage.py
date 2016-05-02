@@ -66,6 +66,7 @@ def subscribe(from_number, cmds):
         Subscribe from events for user
         sub door_name event_type
     """
+    l.info("Got a subscribe command: {}".format(cmds))
     door = _get_door(cmds[1])
     if door == None:
         GS.send_message("Invalid door name '{}'. Use i or h.".format(cmds[1]), [from_number,])
@@ -93,6 +94,7 @@ def unsubscribe(from_number, cmds):
         Unsubscribe from events for user
         unsub door_name event_type
     """
+    l.info("Got an unsubscribe command: {}".format(cmds))
     door = _get_door(cmds[1])
     if door == None:
         GS.send_message("Invalid door name '{}'. Use i or h.".format(cmds[1]), [from_number, ])
