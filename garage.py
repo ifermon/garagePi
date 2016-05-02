@@ -26,13 +26,13 @@ def _get_door(door_abbr):
     elif door_abbr == "h":
         door = heather_door
     else:
-        l.error("Unknown door abbreviation: {}".format(door_abbr))
+        l.info("Unknown door abbreviation: {}".format(door_abbr))
     return door
 
 def help_text(from_number, cmds):
     """ Respond with the list of valid commands """
-    ret_str = ("s, i, h"
-               "[un]sub [i/h] [timer/open/close/error/button]"
+    ret_str = ("s, i, h\n"
+               "[un]sub [i/h] [timer/open/close/error/button]\n"
                "si/sh [# minutes (optional)")
     GS.send_message(ret_str)
     GS.send_message(from_number)
@@ -47,6 +47,22 @@ def subscribe(from_number, cmds):
     if door == None:
         GS.send_message("Invalid door name '{}'. Use i or h.".format(cmds[1]), [from_number,])
         return
+
+    event_type = cmds[2]
+    if event_type == "timer":
+        door.sub_timer_event(from_number)
+    elif event_type == "open":
+        door.sub_open_event(from_number)
+    elif event_type == "close":
+        door.sub_close_event(from_number)
+    elif event_type == "error":
+        door.sub_error_event(from_number)
+    elif event_type == "button":
+        door.sub_button_event(from_number)
+    else:
+        l.info("Unknown event type {}.".fomat(event_type))
+        GS.send_message("Unknown event type {}. Use timer, open, close, error or button".fomat(event_type),
+                        [from_number])
     return
 
 def unsubscribe(from_number, cmds):
@@ -54,6 +70,26 @@ def unsubscribe(from_number, cmds):
         Unsubscribe from events for user
         unsub door_name event_type
     """
+    door = _get_door(cmds[1])
+    if door == None:
+        GS.send_message("Invalid door name '{}'. Use i or h.".format(cmds[1]), [from_number, ])
+        return
+
+    event_type = cmds[2]
+    if event_type == "timer":
+        door.unsub_timer_event(from_number)
+    elif event_type == "open":
+        door.unsub_open_event(from_number)
+    elif event_type == "close":
+        door.unsub_close_event(from_number)
+    elif event_type == "error":
+        door.unsub_error_event(from_number)
+    elif event_type == "button":
+        door.unsub_button_event(from_number)
+    else:
+        l.info("Unknown event type {}.".fomat(event_type))
+        GS.send_message("Unknown event type {}. Use timer, open, close, error or button".fomat(event_type),
+                        [from_number])
     return
 
 def ret_status(from_number, cmds):
