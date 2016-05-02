@@ -331,8 +331,9 @@ class Door(object):
         return
 
     def _sub_event(self, phone_number, event):
-        self.event_notification_list[event].append(phone_number)
-        self.event_notification_list.sync()
+        if phone_number not in self.event_notification_list[event]:
+            self.event_notification_list[event].append(phone_number)
+            self.event_notification_list.sync()
         return 
 
     def sub_open_event(self, phone_number):
