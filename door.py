@@ -141,6 +141,7 @@ class Door(object):
         self.lock.acquire()
         if self.msg_timer is None:
             self.lock.release
+        self.lock.release
         return
 
     def press_button(self, from_number, cmds):
