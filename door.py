@@ -75,6 +75,10 @@ class Door(object):
         self.lock = resource_lock
         self.lock.acquire()
 
+        # Setup logging just for this door
+        self.l = logging.getLogger(door_name)
+        self.l.setLevel(logging.DEBUG)
+
         # access the logger and set up logging
         self.name = door_name
         self.open_close_state_pin = open_close_state_pin
@@ -91,9 +95,6 @@ class Door(object):
             for k in e:
                 self.event_notification_list[k] = []
 
-        # Setup logging just for this door
-        self.l = logging.getLogger(door_name)
-        self.l.setLevel(logging.DEBUG)
 
         # Load any previous preferences for subscriptions
 
