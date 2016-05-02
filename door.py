@@ -81,6 +81,7 @@ class Door(object):
         self.push_button_pin = push_button_pin
         self.msg_timer = None
         pref_file_name = const.door_pref_dir + "./door_preferences_" + self.name
+        self.l.debug ("Preference file name: {}".format(pref_file_name))
         self.event_notification_list = shelve.open(pref_file_name, writeback=True)
 
         # If this is the first time then load empty notification lists
