@@ -377,29 +377,29 @@ class Door(object):
 
     def unsub_button_event(self, phone_number):
         """ Remove phone number from notifications """
-        self._unsub_event(self, phone_number, BUTTON_CLOSE_E)
-        self._unsub_event(self, phone_number, BUTTON_OPEN_E)
+        self._unsub_event(phone_number, BUTTON_CLOSE_E)
+        self._unsub_event(phone_number, BUTTON_OPEN_E)
         return
 
     def unsub_error_event(self, phone_number):
         """ Remove phone number from notifications """
-        self._unsub_event(self, phone_number, DOOR_CLOSING_ERROR_E)
-        self._unsub_event(self, phone_number, DOOR_OPENING_ERROR_E)
+        self._unsub_event(phone_number, DOOR_CLOSING_ERROR_E)
+        self._unsub_event(phone_number, DOOR_OPENING_ERROR_E)
         return
 
     def unsub_timer_event(self, phone_number):
         """ Remove phone number from notifications """
-        self._unsub_event(self, phone_number, TIMER_E)
+        self._unsub_event(phone_number, TIMER_E)
         return
 
     def unsub_close_event(self, phone_number):
         """ Remove phone number from notifications """
-        self._unsub_event(self, phone_number, CLOSE_E)
+        self._unsub_event(phone_number, CLOSE_E)
         return
 
     def unsub_open_event(self, phone_number):
         """ Remove phone number from notifications """
-        self._unsub_event(self, phone_number, OPEN_E)
+        self._unsub_event(phone_number, OPEN_E)
         return
 
     def is_sub_open_event(self, phone_number):
