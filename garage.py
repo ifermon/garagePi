@@ -26,7 +26,7 @@ def _get_door(door_abbr):
     elif door_abbr == "h":
         door = heather_door
     else:
-        l.error("Unknown door abbreviation: {}".format(cmds))
+        l.error("Unknown door abbreviation: {}".format(door_abbr))
     return door
 
 def help_text(from_number, cmds):
