@@ -334,6 +334,7 @@ class Door(object):
         if phone_number not in self.event_notification_list[event]:
             self.event_notification_list[event].append(phone_number)
             self.event_notification_list.sync()
+        self.l.debug("Event notification list: {}".format(self.event_notification_list))
         return 
 
     def sub_open_event(self, phone_number):
@@ -371,6 +372,7 @@ class Door(object):
         if phone_number in self.event_notification_list[event]:
             self.event_notification_list[event].remove(phone_number)
             self.event_notification_list.sync()
+        self.l.debug("Event notification list: {}".format(self.event_notification_list))
         return
 
     def unsub_button_event(self, phone_number):
