@@ -34,7 +34,7 @@ def list_current_subscriptions(from_number, cmds):
             e_str += " - After you've requested it to open/close\n"
         if d.is_sub_error_event(from_number):
             e_str += " - If there is an error\n"
-        if e_str.len() == e_check:
+        if len(e_str) == e_check:
             # You are not subscribed to anything for this door
             msg_str += "Nothing for {}'s door.\n".format(d.name)
         else:
