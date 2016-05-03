@@ -161,6 +161,7 @@ class Door(object):
             cmds[2]
             int(cmds[2])
         except IndexError:
+            GS.send_message("Timer canceled", [from_number,])
             return # No snooze time specified, just return
         except ValueError:
             # Snooze time is not a number, I should send a msg back to user
@@ -172,6 +173,8 @@ class Door(object):
         # User specified sleep time - set a timer to check again
         self.msg_timer = Timer(cmds[2], self._quiet_time_over)
         self.msg_time.start()
+        GS.send_message("Set timer to check in {} minutes.".format(cmds[2]),
+                        [from_number,])
 
         self.lock.release
         return
@@ -315,6 +318,8 @@ class Door(object):
         ''' Sends a message via sms '''
         msg = self._get_event_msg(event_type)
         self.l.debug("Sending message '{0}'".format(msg))
+        GS.send_message(msg, self.event_notification_list[event_type])
+        """
         try:
             # Your Account Sid and Auth Token from plivo.com/user/account
             account_id = const.auth_id
@@ -335,6 +340,7 @@ class Door(object):
         except Exception as e:
             self.l.error("Failed sending message {}".format(msg))
             self.l.error(e)
+            """
         return
 
     def _door_closed(self):
