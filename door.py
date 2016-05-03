@@ -159,10 +159,19 @@ class Door(object):
         # If # of minutes was specififed (cmds[2]) then set new timer with that delay
         try:
             cmds[2]
+            int(cmds[2])
         except IndexError:
-            # User specified sleep time - set a timer to check again
-            self.msg_timer = Timer(cmds[2], self._quiet_time_over)
-            self.msg_time.start()
+            return # No snooze time specified, just return
+        except ValueError:
+            # Snooze time is not a number, I should send a msg back to user
+            self.l.debug("Invalid snooze time: {}".format(cmds[2]))
+            GS.send_message("Snooze time ({}) must be a number.".format(cmds[2]),
+                            [from_number,])
+            return
+
+        # User specified sleep time - set a timer to check again
+        self.msg_timer = Timer(cmds[2], self._quiet_time_over)
+        self.msg_time.start()
 
         self.lock.release
         return
