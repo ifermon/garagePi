@@ -150,6 +150,7 @@ class Door(object):
 
     def snooze_timer(self, from_number, cmds):
         ''' Either cancel or snooze the timer'''
+        self.l.debug("In snooze with these commands: {}".format(cmds))
         # If there is a timer then cancel it
         if self.msg_timer is not None:
             self.msg_timer.cancel()
