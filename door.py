@@ -151,28 +151,30 @@ class Door(object):
     def snooze_timer(self, from_number, cmds):
         ''' Either cancel or snooze the timer'''
         self.l.debug("In snooze with these commands: {}".format(cmds))
+        snooze_time = cmds[1]
+
         # If there is a timer then cancel it
         if self.msg_timer is not None:
             self.msg_timer.cancel()
 
         # If # of minutes was specififed (cmds[2]) then set new timer with that delay
         try:
-            cmds[2]
-            int(cmds[2])
+            snooze_time
+            int(snooze_time)
         except IndexError:
             GS.send_message("Timer canceled", [from_number,])
             return # No snooze time specified, just return
         except ValueError:
             # Snooze time is not a number, I should send a msg back to user
-            self.l.debug("Invalid snooze time: {}".format(cmds[2]))
-            GS.send_message("Snooze time ({}) must be a number.".format(cmds[2]),
+            self.l.debug("Invalid snooze time: {}".format(snooze_time))
+            GS.send_message("Snooze time ({}) must be a number.".format(snooze_time),
                             [from_number,])
             return
 
         # User specified sleep time - set a timer to check again
-        self.msg_timer = Timer(cmds[2], self._quiet_time_over)
+        self.msg_timer = Timer(snooze_time, self._quiet_time_over)
         self.msg_time.start()
-        GS.send_message("Set timer to check in {} minutes.".format(cmds[2]),
+        GS.send_message("Set timer to check in {} minutes.".format(snooze_time),
                         [from_number,])
         return
 
