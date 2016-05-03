@@ -151,8 +151,19 @@ class Door(object):
     def snooze_timer(self, from_number, cmds):
         ''' Either cancel or snooze the timer'''
         self.lock.acquire()
-        if self.msg_timer is None:
-            self.lock.release
+
+        # If there is a timer then cancel it
+        if self.msg_timer is not None:
+            self.msg_timer.cancel()
+
+        # If # of minutes was specififed (cmds[2]) then set new timer with that delay
+        try:
+            cmds[2]
+        except IndexError:
+            # User specified sleep time - set a timer to check again
+            self.msg_timer = Timer(cmds[2], self._quiet_time_over)
+            self.msg_time.start()
+
         self.lock.release
         return
 

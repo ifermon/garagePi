@@ -173,7 +173,9 @@ if __name__ == "__main__":
     # This is our function map. Based on the type of message (which is just
     # the name of a class), call an associated function
     f_map = { 's': ret_status,
+              'status': ret_status,
              'help': help_text,
+              '?': help_text,
               'sub': subscribe,
               'unsub': unsubscribe,
               'list': list_current_subscriptions,
