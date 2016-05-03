@@ -173,7 +173,7 @@ class Door(object):
 
         # User specified sleep time - set a timer to check again
         self.msg_timer = Timer(snooze_time, self._quiet_time_over)
-        self.msg_time.start()
+        self.msg_timer.start()
         GS.send_message("Set timer to check in {} minutes.".format(snooze_time),
                         [from_number,])
         return
