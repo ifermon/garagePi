@@ -150,8 +150,6 @@ class Door(object):
 
     def snooze_timer(self, from_number, cmds):
         ''' Either cancel or snooze the timer'''
-        self.lock.acquire()
-
         # If there is a timer then cancel it
         if self.msg_timer is not None:
             self.msg_timer.cancel()
@@ -175,8 +173,6 @@ class Door(object):
         self.msg_time.start()
         GS.send_message("Set timer to check in {} minutes.".format(cmds[2]),
                         [from_number,])
-
-        self.lock.release
         return
 
     def press_button(self, from_number, cmds):
