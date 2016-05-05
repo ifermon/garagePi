@@ -83,10 +83,12 @@ def subscribe(from_number, cmds):
         door.sub_error_event(from_number)
     elif event_type == "button":
         door.sub_button_event(from_number)
-    else:
+    else: # Should not happen, but users can do typos
         l.info("Unknown event type {}.".fomat(event_type))
         GS.send_message("Unknown event type {}. Use timer, open, close, error or button".fomat(event_type),
                         [from_number])
+        return
+    GS.send_message("Subscribe to {} events for {}'s door confirmed!")
     return
 
 def unsubscribe(from_number, cmds):
@@ -115,6 +117,8 @@ def unsubscribe(from_number, cmds):
         l.info("Unknown event type {}.".fomat(event_type))
         GS.send_message("Unknown event type {}. Use timer, open, close, error or button".fomat(event_type),
                         [from_number])
+        return
+    GS.send_message("Unsubscribe to {} events for {}'s door confirmed!")
     return
 
 def ret_status(from_number, cmds):

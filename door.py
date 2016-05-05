@@ -55,6 +55,9 @@ class Door(object):
             ret_str = "Closed"
         return ret_str
 
+    def __str__(self):
+        return self.name
+
     def set_log_level(log_level=logging.INFO):
         """ Set logging level for this door """
         self.log_level = log_level
