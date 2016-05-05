@@ -25,13 +25,13 @@ def list_current_subscriptions(from_number, cmds):
         e_str = "{}'s door:\n".format(d.name)
         e_check = len(e_str) # We'll check for changes later
         if d.is_sub_open_event(from_number):
-            e_str += " - When the door opens\n"
+            e_str += " - When door opens\n"
         if d.is_sub_close_event(from_number):
-            e_str += " - When the door closes\n"
+            e_str += " - When door closes\n"
         if d.is_sub_timer_event(from_number):
-            e_str += " - When the door is left open\n"
+            e_str += " - When door is left open\n"
         if d.is_sub_button_event(from_number):
-            e_str += " - After you've requested it to open/close\n"
+            e_str += " - Confirmation of open/close\n"
         if d.is_sub_error_event(from_number):
             e_str += " - If there is an error\n"
         if len(e_str) == e_check:
@@ -88,7 +88,7 @@ def subscribe(from_number, cmds):
         GS.send_message("Unknown event type {}. Use timer, open, close, error or button".fomat(event_type),
                         [from_number])
         return
-    GS.send_message("Subscribe to {} events for {}'s door confirmed!")
+    GS.send_message("Subscribe to {} events for {}'s door confirmed!".format(event_type, door))
     return
 
 def unsubscribe(from_number, cmds):
@@ -118,7 +118,7 @@ def unsubscribe(from_number, cmds):
         GS.send_message("Unknown event type {}. Use timer, open, close, error or button".fomat(event_type),
                         [from_number])
         return
-    GS.send_message("Unsubscribe to {} events for {}'s door confirmed!")
+    GS.send_message("Unsubscribe to {} events for {}'s door confirmed!".format(event_type, door))
     return
 
 def ret_status(from_number, cmds):
