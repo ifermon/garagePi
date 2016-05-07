@@ -29,11 +29,6 @@ class Light_Monitor(thread.Thread):
         self.light_left_on_timer = None
         self.l = logging.getLogger(__name__)
 
-        # Added this for light level logging
-        self.day_light_levels = None
-
-        # we log light levels, but don't want too much
-        self.log_counter = 0
         return
 
     # -----------------------------------------------------------------------
@@ -63,11 +58,6 @@ class Light_Monitor(thread.Thread):
         # Read the value of the light sensor
         data = self.bus.read_i2c_block_data(self._addr, 0x11)
         light_level = int((data[1] + (256 * data[0])) / 1.2)
-
-        # First log the light level
-        if self.log_counter % 20 == 0:
-            self.l.debug("Light level is: {0}".format(light_level))
-        self.log_counter += 1
 
         if light_level > _trigger_value:
             self.light_state = ON
@@ -107,38 +97,24 @@ class Light_Monitor(thread.Thread):
                 # now I should just sleep till one hour afer sunset 
                 time.sleep(secs_till_sunset + 3600)
 
-            '''
-            # Set a 10pm check
-            self.n10pm_timer = Timer(GS.secs_until_10pm(), self.n10pm_check)
-            '''
+            # Store the "current" as the last state, check the new state
+            old_light_state = self.light_state
+            if self.get_light_state() == ON and old_light_state == OFF:
+                # Light just turned on
+                self.light_left_on_timer = Timer(300, self.check_light_still_on())
 
-            # Get the current light level
-            self.get_light_state()
-
-            # If we changed state then set timer and check again in 5 mins
-            # If light was turned off then cancel the timer and change state
             time.sleep(POLL_TIME)
         return
 
-    # It's 10pm, check to see if the lights are still on
-    def n10pm_check(self):
-        # Ensure that when we look for secs till 10pm it takes the next one
-        time.sleep(5)
-        GS.lock.acquire()
-        if self.light_state == ON:
-            GS.send_message("Garage light is on")
-        self.n10pm_timer = Timer(GS.secs_until_10pm(), self.n10pm_check)
-        self.l.info("10pm light check finsihed")
-        GS.lock.release()
-        return
-
-    # Check to see if light is still on
-    # This runs after timer expired, if light is on then send message
     def check_light_still_on(self):
+        """
+            Check to see if light is still on
+            This runs after timer expired, if light is on then send message
+        """
         GS.lock.acquire()
-        if light_level > _trigger_value and self.light_state != ON:
+        if self.get_light_state() == ON:
             GS.send_message("Garage light on.")
-        self.light_left_on_timer = None
+        self.light_left_on_timer = Timer(300, self.check_light_still_on())
         GS.lock.release()
         return
 
