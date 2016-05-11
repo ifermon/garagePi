@@ -39,6 +39,25 @@ class Door(object):
             that the signal pin cooresponding to the reed switch for the door
             is an open circut, CLOSED is the opposite.
     '''
+
+    def get_event_name(self, event):
+        if event == CLOSE_E:
+            ret_str = "Close Event"
+        elif event == OPEN_E:
+            ret_str = "Open Event"
+        elif event == TIMER_E:
+            ret_str = "Timer Event"
+        elif event == DOOR_CLOSING_ERROR_E:
+            ret_str = "Door Closing Error Event"
+        elif event == DOOR_OPENING_ERROR_E:
+            ret_str = "Door Opening Error Event"
+        elif event == BUTTON_CLOSE_E:
+            ret_str = "Button Close Event"
+        elif event == BUTTON_OPEN_E:
+            ret_str = "Button Open Event"
+        else:
+            ret_str = event
+        return ret_str
     
     def get_state_str(self, state=None):
         '''
@@ -91,7 +110,8 @@ class Door(object):
         # Load any previous preferences for subscriptions
         pref_file_name = const.door_pref_dir + "/.door_preferences_" + self.name
         self.l.debug ("Preference file name: {}".format(pref_file_name))
-        self.event_notification_list = shelve.open(pref_file_name, writeback=True)
+        self.event_notification_list = shelve.open(pref_file_name, 
+                writeback=True)
 
         # If this is the first time then load empty notification lists
         if CLOSE_E not in self.event_notification_list:
@@ -101,8 +121,10 @@ class Door(object):
                 self.event_notification_list[k] = []
         else: # Log the loaded preferences
             self.l.info("Preferences for {}'s door:".format(self.name))
+            lstr = ""
             for k, v in self.event_notification_list.iteritems():
-                self.l.info("{}: {}".format(k, v))
+                lstr = "{}\n\t{}: {}".format(lstr, self.get_event_name(k), v)
+            self.l.info(lstr)
 
         # Now set up the pins
         # Multiple processes are setting up pins, so supress warnings

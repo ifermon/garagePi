@@ -28,6 +28,7 @@ class Light_Monitor(thread.Thread):
         self.bus = smbus.SMBus(1)
         self.light_left_on_timer = None
         self.l = logging.getLogger(__name__)
+        self.l.setLevel(logging.DEBUG)
 
         return
 
@@ -47,9 +48,9 @@ class Light_Monitor(thread.Thread):
             ret_str = "Unknown"
         return ret_str
 
-# -----------------------------------------------------------------------
-# Set the light level and update the current state (on vs. off)
-# -----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+    # Set the light level and update the current state (on vs. off)
+    # -----------------------------------------------------------------------
     def get_light_state(self):
 
         GS.lock.acquire()
@@ -101,8 +102,11 @@ class Light_Monitor(thread.Thread):
             old_light_state = self.light_state
             if self.get_light_state() == ON and old_light_state == OFF:
                 # Light just turned on
-                self.light_left_on_timer = Timer(300, self.check_light_still_on())
+                self.l.debug("Light turned on (was off).")
+                self.light_left_on_timer = Timer(420, self.check_light_still_on)
+                self.light_left_on_timer.start()
 
+            self.l.debug("Going to sleep for {} seconds.".format(POLL_TIME))
             time.sleep(POLL_TIME)
         return
 
@@ -113,8 +117,9 @@ class Light_Monitor(thread.Thread):
         """
         GS.lock.acquire()
         if self.get_light_state() == ON:
-            GS.send_message("Garage light on.")
-        self.light_left_on_timer = Timer(300, self.check_light_still_on())
+            GS.send_message("Garage light left on.")
+        self.light_left_on_timer = Timer(420, self.check_light_still_on)
+        self.light_left_on_timer.start()
         GS.lock.release()
         return
 
