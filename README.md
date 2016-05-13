@@ -1,2 +1,17 @@
 # garagePi
- Sends texts for the following events: door opened, door opened after 30 mins, door opened after 10pm, light on after 10pm. Uses Raspberry Pi V2. Needs additional hardware (relay(s), light sensor, reed switch(es).
+
+A set of code to allow a user to monitor and control one or more garage doors via SMS commands. Meant for manual installation using a RaspberryPi and some additional hardware. Also requires a (very cheap) subscription to a service called Plivo. 
+
+I'm happy to respond to questions if someone else would like to to use this as a start for their own project. 
+
+Uses Raspberry Pi running Jessie. Needs additional hardware (relay(s), light sensor, reed switch(es).
+
+
+Currently can support the following events:
+ - Door opened 
+ - Door closed
+ - Door still opened after x minutes
+ - Light on
+ - Button pushed (vs. using door remote)
+
+User can "subscribe" to each of these events on a door by door basis via SMS messages. Security is possible to limit the phone nubmers that will work. User can also "snooze" and alarm - e.g. if the door open nag timer is reminding you every five minutes you can snooze it to either shut it off or remind you again in xx minutes if the door is still open.
