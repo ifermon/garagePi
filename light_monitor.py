@@ -6,20 +6,30 @@ import datetime
 import os
 import garage_shared as GS
 import logging
+import shelve
+import const
 
 _addr_default = 0x23
 _trigger_value = 5
 POLL_TIME = 5
+# Default timer time (in seconds = 7 minutes)
+TIMER_INTERVAL = 420
 
 ON = 1
 OFF = 2
 UNKNOWN = 3
 
+
+# Events
+ON_E = "Light on event"
+OFF_E = "Light off event"
+TIMER_E = "Timer event"
+
 class Light_Monitor(thread.Thread):
-    # -----------------------------------------------------------------------
-    # Some basic setup
-    # -----------------------------------------------------------------------
     def __init__(self, queue, addr=_addr_default):
+        """ 
+         Some basic setup
+        """
         super(Light_Monitor, self).__init__()
         self.queue = queue
         self._addr = addr
@@ -30,13 +40,25 @@ class Light_Monitor(thread.Thread):
         self.l = logging.getLogger(__name__)
         self.l.setLevel(logging.DEBUG)
 
+        # Get preferences
+        pref_file_name = const.light_pref_file
+        self.l.debug("Preference file name: {}".format(pref_file_name))
+        self.notification_list = shelve.open(pref_file_name, writeback=True)
+
+        if ON_E not in self.notification_list:
+            e = [ON_E, OFF_E, TIMER_E]
+            for k in e:
+                self.notification_list[k] = []
+        else:
+            self.l.info("Light notification prefs: {}".format(
+                    self.notification_list))
         return
 
-    # -----------------------------------------------------------------------
-    # Shortcut to check on the current state, this doesn't check the sensor,
-    # it just checks what the last update was (on or off)
-    # -----------------------------------------------------------------------
     def get_light(self):
+        """ 
+         Shortcut to check on the current state, this doesn't check the sensor,
+         it just checks what the last update was (on or off)
+        """
         return self.light_state
     
     def get_light_str(self):
@@ -48,10 +70,10 @@ class Light_Monitor(thread.Thread):
             ret_str = "Unknown"
         return ret_str
 
-    # -----------------------------------------------------------------------
-    # Set the light level and update the current state (on vs. off)
-    # -----------------------------------------------------------------------
     def get_light_state(self):
+        """ 
+            Set the light level and update the current state (on vs. off)
+        """
 
         GS.lock.acquire()
         state = self.light_state
@@ -68,12 +90,12 @@ class Light_Monitor(thread.Thread):
         GS.lock.release()
         return self.light_state
 
-    # -----------------------------------------------------------------------
-    # Monitor the light level. Change the status if the measurement (on vs.
-    # vs. off) is different that what is currently set
-    # Only operate at night
-    # -----------------------------------------------------------------------
     def run(self):
+        """ 
+         Monitor the light level. Change the status if the measurement (on vs.
+         vs. off) is different that what is currently set
+         Only operate at night
+        """
 
         self.get_light_state()
 
@@ -87,7 +109,6 @@ class Light_Monitor(thread.Thread):
                 "\tLight is: {0}\n".format(self.get_light_str()))
 
         while self.keep_going:
-            
             # Check to see if I should even be checking, sensor only
             # works when it's dark
             if not GS.is_dark():
@@ -103,7 +124,8 @@ class Light_Monitor(thread.Thread):
             if self.get_light_state() == ON and old_light_state == OFF:
                 # Light just turned on
                 self.l.debug("Light turned on (was off).")
-                self.light_left_on_timer = Timer(420, self.check_light_still_on)
+                self.light_left_on_timer = Timer(TIMER_INTERVAL, 
+                        self.check_light_still_on)
                 self.light_left_on_timer.start()
 
             self.l.debug("Going to sleep for {} seconds.".format(POLL_TIME))
@@ -118,7 +140,8 @@ class Light_Monitor(thread.Thread):
         GS.lock.acquire()
         if self.get_light_state() == ON:
             GS.send_message("Garage light left on.")
-        self.light_left_on_timer = Timer(420, self.check_light_still_on)
+        self.light_left_on_timer = Timer(TIMER_INTERVAL, 
+                self.check_light_still_on)
         self.light_left_on_timer.start()
         GS.lock.release()
         return

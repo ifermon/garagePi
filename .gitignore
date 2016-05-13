@@ -6,6 +6,7 @@ __pycache__/
 
 const.py
 *.csv
+.*pref*
 
 # C extensions
 *.so
