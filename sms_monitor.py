@@ -144,6 +144,12 @@ class SMS_Monitor(MP.Process):
                 GS.send_message(msg)
             return "Received"
 
+        @app.route("/reg_phone", methods=['GET', ])
+        def register_phone_ip():
+            self.l.info("In register phone")
+            self.l.info("message: {}".format(request))
+            return "Received"
+
         # Very bad style hard-coding this. Some day I'll fix it
         uuid_store = shelve.open("{0}{1}".format(LOG_DIR, "uuid_store"))
         app.run(host='0.0.0.0', debug=self.debug, ssl_context='adhoc')
