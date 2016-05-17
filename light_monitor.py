@@ -138,7 +138,7 @@ class Light_Monitor(thread.Thread):
             This runs after timer expired, if light is on then send message
         """
         GS.lock.acquire()
-        if self.get_light_state() == ON:
+        if self.get_light_state() == ON and GS.is_dark:
             GS.send_message("Garage light left on.")
         self.light_left_on_timer = Timer(TIMER_INTERVAL, 
                 self.check_light_still_on)
