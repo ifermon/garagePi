@@ -1,4 +1,4 @@
-# garagePi
+**garagePi:**
 
 A set of code to allow a user to monitor and control one or more garage doors via SMS commands. Meant for manual installation using a RaspberryPi and some additional hardware. Also requires a (very cheap) subscription to a service called Plivo. 
 
@@ -15,3 +15,9 @@ Currently can support the following events:
  - Button pushed (vs. using door remote)
 
 User can "subscribe" to each of these events on a door by door basis via SMS messages. Security is possible to limit the phone nubmers that will work. User can also "snooze" and alarm - e.g. if the door open nag timer is reminding you every five minutes you can snooze it to either shut it off or remind you again in xx minutes if the door is still open.
+
+To Do:
+ - Add ability to subscribe to light monitor events
+ - Add ability to "register" a phone number on the system
+ - Add interface for phone on register
+ - Add ability to feed openhab
