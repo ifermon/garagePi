@@ -145,6 +145,7 @@ class Light_Monitor(thread.Thread):
         GS.lock.acquire()
         self.light_left_on_timer = None
         if self.get_light_state() == ON and GS.is_dark():
+            self.l.debug("Sending light message")
             GS.send_message("Garage light left on.")
             self.light_left_on_timer = Timer(TIMER_INTERVAL, 
                     self.check_light_still_on)
