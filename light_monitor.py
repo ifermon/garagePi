@@ -108,6 +108,8 @@ class Light_Monitor(thread.Thread):
                 "\tIs night: {0}\n".format(GS.is_dark()) +
                 "\tLight is: {0}\n".format(self.get_light_str()))
 
+        log_skip_count = 0
+
         while self.keep_going:
             # Check to see if I should even be checking, sensor only
             # works when it's dark
@@ -128,7 +130,10 @@ class Light_Monitor(thread.Thread):
                         self.check_light_still_on)
                 self.light_left_on_timer.start()
 
-            self.l.debug("Going to sleep for {} seconds.".format(POLL_TIME))
+            # Just log once in a while to know we are alive
+            if log_skip_count % 60 == 0:
+                self.l.debug("Going to sleep for {} seconds.".format(POLL_TIME))
+            log_skip_count += 1
             time.sleep(POLL_TIME)
         return
 
@@ -138,11 +143,12 @@ class Light_Monitor(thread.Thread):
             This runs after timer expired, if light is on then send message
         """
         GS.lock.acquire()
-        if self.get_light_state() == ON and GS.is_dark:
+        self.light_left_on_timer = None
+        if self.get_light_state() == ON and GS.is_dark():
             GS.send_message("Garage light left on.")
-        self.light_left_on_timer = Timer(TIMER_INTERVAL, 
-                self.check_light_still_on)
-        self.light_left_on_timer.start()
+            self.light_left_on_timer = Timer(TIMER_INTERVAL, 
+                    self.check_light_still_on)
+            self.light_left_on_timer.start()
         GS.lock.release()
         return
 
