@@ -19,8 +19,8 @@ fi
 if [ -f ${HOME_DIR}/.nosleep ]; then
     echo "${HOME_DIR}/.nosleep exists, skipping sleep delay"
 else
-    echo "$(date): Starting up ... going to sleep for 30 seconds"
-    sleep 30
+    echo "$(date): Starting up ... going to sleep for 45 seconds"
+    sleep 45
 fi
 
 # cd to my working directory and setup virtualenv
