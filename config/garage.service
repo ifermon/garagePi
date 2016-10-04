@@ -6,11 +6,19 @@ Description=Monitors Garage Door
 # sudo systemctl enable garage.service
 # sudo systemctl start garage.service
 # To see logs: sudo journalctl --unit=garage
-#
+# the watchdog is setup at /etc/systemd/system.conf
+# https://www.freedesktop.org/wiki/Software/systemd/NetworkTarget/
+After=network-online.target
+Wants=network-online.target
 
 [Service]
-Type=simple
-ExecStart=/home/garage/garagePi/go
+Type=notify
+ExecStart=/home/garage/garagePi/garage.py
+#ExecStart=/home/garage/garagePi/go
+WatchdogSec=120
+NotifyAccess=all
+Restart=always
+
 
 [Install]
 WantedBy=multi-user.target
