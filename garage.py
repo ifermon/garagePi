@@ -1,3 +1,4 @@
+#!/home/garage/garagePi/venv/bin/python
 '''
 	This is the master base class for the garage project
 	It is used to pass around shared objects
@@ -15,6 +16,7 @@ import light_monitor as LM
 import sys
 import const
 import logging
+import sdnotify
 """
     TO DO: Respond to texts to the number that it came from for help and status
 """
@@ -190,12 +192,18 @@ if __name__ == "__main__":
     # Number map just gives a list of valid numbers for the from
     valid_numbers = Set([const.Ivan_cell, const.Heather_cell])
 
+    # We are a service, so tell them that we have started up successfully
+    n = sdnotify.SystemdNotifier()
+    n.notify("READY=1")
+    n.notify("WATCHDOG_USEC=80")
+
     # everything is set up, now wait for messages and process them as needed
     while keep_alive:
+            n.notify("WATCHDOG=1")
             # wait until we get a message
             l.debug("Waiting for message")
             try:
-                    msg = q.get(True, 1800)
+                    msg = q.get(True, 60)
                     l.debug ("Recevied message <{0}>.".format(msg))
             except Empty:
                     l.debug("Queue get timed out after waiting")
