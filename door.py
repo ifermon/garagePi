@@ -106,6 +106,7 @@ class Door(object):
         self.open_close_state_pin = open_close_state_pin
         self.push_button_pin = push_button_pin
         self.msg_timer = None
+        self.door_last_opened = None
 
         # Load any previous preferences for subscriptions
         pref_file_name = const.door_pref_dir + "/.door_preferences_" + self.name
@@ -229,6 +230,8 @@ class Door(object):
             else: # Door closed as expected
                 self.l.debug("{}'s door closed after pressing button".format(self.name))
                 self._send_msg(BUTTON_CLOSE_E)
+        else:
+            self.l.err("Unknown error pushing button - door in unknown state")
         return
 
     def open(self):
@@ -321,7 +324,10 @@ class Door(object):
 
     def _get_event_msg(self, event_type):
         now = time.ctime(time.time())
-        dlo = time.ctime(self.door_last_opened)
+        if self.door_last_opened == None:
+            dlo = now
+        else:
+            dlo = time.ctime(self.door_last_opened)
         if event_type == TIMER_E:
             ret_str = TIMER_E.format(self.name, now)
         elif event_type == DOOR_OPENING_ERROR_E:
@@ -343,28 +349,6 @@ class Door(object):
         msg = self._get_event_msg(event_type)
         self.l.debug("Sending message '{0}'".format(msg))
         GS.send_message(msg, self.event_notification_list[event_type])
-        """
-        try:
-            # Your Account Sid and Auth Token from plivo.com/user/account
-            account_id = const.auth_id
-            auth_token  = const.auth_token
-            # List of numbers to send message to
-            client = plivo.RestAPI(account_id, auth_token)
-            number_list = self.event_notification_list[event_type]
-            self.l.debug("Sending msg to the following numbers: {}".format(
-                    ", ".join(map(str, number_list))))
-            # All send numbers must be prefixed by a +
-            for n in number_list:
-                    params = { 'src': const.number, 
-                                    'dst': "+" + n,
-                                    'text': msg, 
-                                    'type': 'sms', }
-                    response = client.send_message(params)
-                    self.l.debug("Got response: {}".format(response))
-        except Exception as e:
-            self.l.error("Failed sending message {}".format(msg))
-            self.l.error(e)
-            """
         return
 
     def _door_closed(self):
