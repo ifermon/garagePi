@@ -16,6 +16,9 @@ POWER_PIN = 24
 INITIAL_WAIT_TIME = 300 # Time in secs before first nag msg is sent when door is left opened
 REPEAT_WAIT_TIME = 1800 # Time in secs before repeat nag msg is sent
 TRANSITION_WAIT_TIME = 30 # Time in secs to wait for door operation to complete (open/close)
+OPEN_HIST_KEY = "Open"
+CLOSE_HIST_KEY = "Close"
+DEFAULT_HIST_COUNT = 5
 
 # Events used for sending messages / publishing messages
 # Event values are also designed to be the message text - I know this is horrible but it's easy
@@ -114,6 +117,15 @@ class Door(object):
         self.event_notification_list = shelve.open(pref_file_name, 
                 writeback=True)
 
+        # Load any existing history
+        hist_file_name = const.door_hist_dir + "/.door_hist_" + self.name
+        self.l.debug ("History file name: {}".format(hist_file_name))
+        self.history = shelve.open(hist_file_name, writeback=True)
+        if not self.history.has_key(OPEN_HIST_KEY):
+            self.history[OPEN_HIST_KEY] = []
+        if not self.history.has_key(CLOSE_HIST_KEY):
+            self.history[CLOSE_HIST_KEY] = []
+
         # If this is the first time then load empty notification lists
         if CLOSE_E not in self.event_notification_list:
             e = [CLOSE_E, OPEN_E, TIMER_E, BUTTON_OPEN_E, BUTTON_CLOSE_E,
@@ -153,7 +165,7 @@ class Door(object):
             self.l.info("Door already opened at startup")
             self.msg_timer = Timer(INITIAL_WAIT_TIME, self._quiet_time_over)
             self.msg_timer.start()
-            self.door_last_opened = time.time()
+            self.door_last_opened = time.ctime()
 
         self.l.info("\n\tName: {0}\n".format(door_name) +
                 "\tProcess name: {0}\n".format(mp.current_process().name) +
@@ -298,7 +310,9 @@ class Door(object):
             self.msg_timer.cancel()
         else:
             # Record the time last opened if event is "new"
-            self.door_last_opened = time.time()
+            self.door_last_opened = time.ctime()
+            self.history[OPEN_HIST_KEY].insert(0, self.door_last_opened)
+            self.history.sync()
             # Now send msg and set a msg timer so we don't send more messages
             self._send_msg(OPEN_E)
 
@@ -327,7 +341,7 @@ class Door(object):
         if self.door_last_opened == None:
             dlo = now
         else:
-            dlo = time.ctime(self.door_last_opened)
+            dlo = self.door_last_opened
         if event_type == TIMER_E:
             ret_str = TIMER_E.format(self.name, now)
         elif event_type == DOOR_OPENING_ERROR_E:
@@ -361,8 +375,17 @@ class Door(object):
             self.l.error("Door closed and no open msg_timer - should not happen")
         else:
             self.msg_timer.cancel()
+            self.history[CLOSE_HIST_KEY].insert(0, time.ctime())
+            self.history.sync()
             self.msg_timer = None
         return
+
+    def get_open_history(self, count=DEFAULT_HIST_COUNT):
+        """ Return a string of the last n times door opened """
+        count = min(count, len(self.history[OPEN_HIST_KEY]))
+        str_list = ["{}'s door open history:".format(self.name),] + self.history[OPEN_HIST_KEY][:count]
+        ret_str = "\t\n".join(str_list)
+        return ret_str
 
     def _sub_event(self, phone_number, event):
         if phone_number not in self.event_notification_list[event]:

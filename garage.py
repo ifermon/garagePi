@@ -58,10 +58,28 @@ def help_text(from_number, cmds):
     """ Respond with the list of valid commands """
     ret_str = ("s, i, h\n"
                "[un]sub [i/h] [timer/open/close/error/button]\n"
+               "list\n"
+               "?\n"
+               "hist i/h\n"
                "si/sh [# minutes (optional)")
     GS.send_message(ret_str)
     GS.send_message(from_number)
     return
+
+def get_history(from_number, cmds):
+    """
+        Get the history of open / close events for door
+    """
+    l.info("Got a history command: {}".format(cmds))
+    door = _get_door(cmds[1])
+    if door == None:
+        GS.send_message("Invalid door name '{}'. Use i or h.".format(cmds[1]), [from_number,])
+        return
+
+    ret_str = door.get_open_history()
+    GS.send_message(ret_str)
+    return
+
 
 def subscribe(from_number, cmds):
     """
@@ -184,6 +202,7 @@ if __name__ == "__main__":
               '?': help_text,
               'sub': subscribe,
               'unsub': unsubscribe,
+              'hist': get_history,
               'list': list_current_subscriptions,
               'si': ivan_door.snooze_timer,
               'sh': heather_door.snooze_timer,
