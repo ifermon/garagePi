@@ -9,7 +9,6 @@ from multiprocessing import RLock, Queue
 from Queue import Empty
 import garage_shared as GS
 from door import Door
-from sets import Set
 import time
 import sms_monitor as SMS
 import light_monitor as LM
@@ -60,7 +59,7 @@ def help_text(from_number, cmds):
                "[un]sub [i/h] [timer/open/close/error/button]\n"
                "list\n"
                "?\n"
-               "hist i/h\n"
+               "hist i/h [count]\n"
                "si/sh [# minutes (optional)")
     GS.send_message(ret_str)
     GS.send_message(from_number)
@@ -76,7 +75,11 @@ def get_history(from_number, cmds):
         GS.send_message("Invalid door name '{}'. Use i or h.".format(cmds[1]), [from_number,])
         return
 
-    ret_str = door.get_open_history()
+    if len(cmds) > 2: #We should have a count
+        count = cmds[2]
+    else:
+        count = None
+    ret_str = door.get_open_history(count)
     GS.send_message(ret_str)
     return
 
@@ -209,7 +212,7 @@ if __name__ == "__main__":
              'i': ivan_door.press_button,
              'h': heather_door.press_button}
     # Number map just gives a list of valid numbers for the from
-    valid_numbers = Set([const.Ivan_cell, const.Heather_cell])
+    valid_numbers = [const.Ivan_cell, const.Heather_cell]
 
     # We are a service, so tell them that we have started up successfully
     n = sdnotify.SystemdNotifier()
