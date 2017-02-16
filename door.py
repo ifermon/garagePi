@@ -142,9 +142,8 @@ class Door(object):
             self.history[Door._close_hist_key] = []
 
         # If this is the first time then load empty notification lists
-        if Door.CLOSE_E not in self.event_notification_list:
-            e = [Door.CLOSE_E, Door.OPEN_E, Door.TIMER_E, Door.BUTTON_OPEN_E, Door.BUTTON_CLOSE_E,
-                    Door.DOOR_OPENING_ERROR_E, Door.DOOR_CLOSING_ERROR_E]
+        if Door._event_names[Door.CLOSE_E] not in self.event_notification_list:
+            e = Door._event_names.items()
             for k in e:
                 self.event_notification_list[k] = []
         else: # Log the loaded preferences
