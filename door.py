@@ -73,7 +73,7 @@ class Door(object):
         '''
             Utility method to return a list of all valid events for class Door
         '''
-        return _event_names.keys()
+        return Door._event_names.keys()
 
 
     def get_state_str(self, state=None):
@@ -85,7 +85,7 @@ class Door(object):
         '''
         if state is None:
             state = self.current_state
-        if state == OPENED:
+        if state == Door.OPENED:
             ret_str = "Opened"
         else:
             ret_str = "Closed"
@@ -136,10 +136,10 @@ class Door(object):
         hist_file_name = const.door_hist_dir + "/.door_hist_" + self.name
         self.l.debug ("History file name: {}".format(hist_file_name))
         self.history = shelve.open(hist_file_name, writeback=True)
-        if not self.history.has_key(_open_hist_key):
-            self.history[_open_hist_key] = []
-        if not self.history.has_key(_close_hist_key):
-            self.history[_close_hist_key] = []
+        if not self.history.has_key(Door._open_hist_key):
+            self.history[Door._open_hist_key] = []
+        if not self.history.has_key(Door._close_hist_key):
+            self.history[Door._close_hist_key] = []
 
         # If this is the first time then load empty notification lists
         if Door.CLOSE_E not in self.event_notification_list:
@@ -152,7 +152,7 @@ class Door(object):
             lstr = ""
             for k, v in self.event_notification_list.iteritems():
                 # noinspection PyProtectedMember
-                lstr = "{}\n\t{}: {}".format(lstr, Door._event_name[k], v)
+                lstr = "{}\n\t{}: {}".format(lstr, Door._event_names[k], v)
             self.l.info(lstr)
 
         # Now set up the pins
@@ -164,8 +164,8 @@ class Door(object):
         #GPIO.setup(self.open_close_state_pin, GPIO.IN, initial=GPIO.LOW,
         GPIO.setup(self.open_close_state_pin, GPIO.IN,
                 pull_up_down=GPIO.PUD_DOWN)
-        GPIO.setup(_power_pin, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.output(_power_pin, True)
+        GPIO.setup(Door._power_pin, GPIO.OUT, initial=GPIO.LOW)
+        GPIO.output(Door._power_pin, True)
 
         # Settings for relay switch (door switch)
         GPIO.setup(self.push_button_pin, GPIO.OUT, initial=GPIO.HIGH)
@@ -177,9 +177,9 @@ class Door(object):
 
         # Now get and set the current state of the door
         self.last_state = self.get_status()
-        if self.last_state == OPENED:
+        if self.last_state == Door.OPENED:
             self.l.info("Door already opened at startup")
-            self.msg_timer = Timer(_initial_wait_time, self._quiet_time_over)
+            self.msg_timer = Timer(Door._initial_wait_time, self._quiet_time_over)
             self.msg_timer.start()
             self.door_last_opened = time.ctime()
 
@@ -187,7 +187,7 @@ class Door(object):
                 "\tProcess name: {0}\n".format(mp.current_process().name) +
                 "\tParent PID: {0}\n".format(os.getppid()) +
                 "\tPID: {0}\n".format(os.getpid()) +
-                "\tPower pin: {0}\n".format(_power_pin) +
+                "\tPower pin: {0}\n".format(Door._power_pin) +
                 "\tSignal pin: {0}\n".format(open_close_state_pin) +
                 "\tSwitch pin: {0}\n".format(push_button_pin) +
                 "\tCurrent state {0}\n".format(self.get_state_str()))
@@ -242,24 +242,24 @@ class Door(object):
         GPIO.output(self.push_button_pin, GPIO.HIGH)
         self.lock.release()
 
-        time.sleep(_transition_wait_time)
-        if begin_state == CLOSED:
-            if self.get_status() == CLOSED:
+        time.sleep(Door._transition_wait_time)
+        if begin_state == Door.CLOSED:
+            if self.get_status() == Door.CLOSED:
                 """ Failed at opening door, send message """
                 self._send_msg(Door.DOOR_OPENING_ERROR_E)
             else:
                 self.l.info("{}'s door was closed, we opened it".format(self.name))
                 self._send_msg(Door.BUTTON_OPEN_E)
-        elif begin_state == OPENED:
+        elif begin_state == Door.OPENED:
             """ Let's confirm that the door was closed"""
-            if self.get_status() != CLOSED:
+            if self.get_status() != Door.CLOSED:
                 self.l.error("{}'s door did not close as expected".format(self.name))
                 self._send_msg(Door.DOOR_CLOSING_ERROR_E)
             else: # Door closed as expected
                 self.l.debug("{}'s door closed after pressing button".format(self.name))
                 self._send_msg(Door.BUTTON_CLOSE_E)
         else:
-            self.l.err("Unknown error pushing button - door in unknown state")
+            self.l.error("Unknown error pushing button - door in unknown state")
         return
 
     def open(self):
@@ -268,7 +268,7 @@ class Door(object):
             Locking handled by press_button and get state functions
             Presses button to toggle door if door state is not already open
         '''
-        if self.get_status() == CLOSED:
+        if self.get_status() == Door.CLOSED:
             self.press_button()
         return
 
@@ -278,7 +278,7 @@ class Door(object):
             Locking handled by press_button and get state functions
             Presses button to toggle door if door state is not already closed
         '''
-        if self.get_status() == OPENED:
+        if self.get_status() == Door.OPENED:
             self.press_button()
         return
 
@@ -299,7 +299,7 @@ class Door(object):
         # Now see if the door state has changed
         self.get_status()
         if self.current_state != self.last_state:
-            if self.current_state == OPENED:
+            if self.current_state == Door.OPENED:
                 self._door_opened()
                 self.l.debug("In callback, door opened")
             else:
@@ -327,13 +327,13 @@ class Door(object):
         else:
             # Record the time last opened if event is "new"
             self.door_last_opened = time.ctime()
-            self.history[_open_hist_key].insert(0, self.door_last_opened)
+            self.history[Door._open_hist_key].insert(0, self.door_last_opened)
             self.history.sync()
             # Now send msg and set a msg timer so we don't send more messages
             self._send_msg(Door.OPEN_E)
 
         # Set a timer so we don't bother with repeated messages
-        self.msg_timer = Timer(_initial_wait_time, self._quiet_time_over)
+        self.msg_timer = Timer(Door._initial_wait_time, self._quiet_time_over)
         self.msg_timer.start()
         return
 
@@ -345,9 +345,9 @@ class Door(object):
 
         # Check to see if door is still opened, if so, set timer to check
         # again in 30 mins
-        if self.get_status() == OPENED:
+        if self.get_status() == Door.OPENED:
             self._send_msg(Door.TIMER_E)
-            self.msg_timer = Timer(_repeat_wait_time, self._quiet_time_over)
+            self.msg_timer = Timer(Door._repeat_wait_time, self._quiet_time_over)
             self.msg_timer.start()
         self.l.debug("Leaving quiet timer")
         return
@@ -359,17 +359,17 @@ class Door(object):
         else:
             dlo = self.door_last_opened
         if event_type == Door.TIMER_E:
-            ret_str = Door.TIMER_E.format(self.name, now)
+            ret_str = Door._event_msgs[Door.TIMER_E].format(self.name, now)
         elif event_type == Door.DOOR_OPENING_ERROR_E:
-            ret_str = Door.DOOR_OPENING_ERROR_E.format(self.name, now)
+            ret_str = Door._event_msgs[Door.DOOR_OPENING_ERROR_E].format(self.name, now)
         elif event_type == Door.BUTTON_OPEN_E:
-            ret_str = Door.BUTTON_OPEN_E.format(self.name)
+            ret_str = Door._event_msgs[Door.BUTTON_OPEN_E].format(self.name)
         elif event_type == Door.DOOR_CLOSING_ERROR_E:
-            ret_str = Door.DOOR_CLOSING_ERROR_E.format(self.name, now)
+            ret_str = Door._event_msgs[Door.DOOR_CLOSING_ERROR_E].format(self.name, now)
         elif event_type == Door.BUTTON_CLOSE_E:
-            ret_str = Door.BUTTON_CLOSE_E.format(self.name)
+            ret_str = Door._event_msgs[Door.BUTTON_CLOSE_E].format(self.name)
         elif event_type == Door.OPEN_E:
-            ret_str = Door.OPEN_E.format(self.name, dlo)
+            ret_str = Door._event_msgs[Door.OPEN_E].format(self.name, dlo)
         else:
             ret_str = "Invalid event"
         return ret_str
@@ -391,7 +391,7 @@ class Door(object):
             self.l.error("Door closed and no open msg_timer - should not happen")
         else:
             self.msg_timer.cancel()
-            self.history[_close_hist_key].insert(0, time.ctime())
+            self.history[Door._close_hist_key].insert(0, time.ctime())
             self.history.sync()
             self.msg_timer = None
         return
@@ -399,9 +399,9 @@ class Door(object):
     def get_open_history(self, count):
         """ Return a string of the last n times door opened """
         if count is None: # calling arg will always send count
-            count = _default_hist_count
-        count = min(count, len(self.history[_open_hist_key]))
-        str_list = ["{}'s door open history:".format(self.name),] + self.history[_open_hist_key][:count]
+            count = Door._default_hist_count
+        count = min(count, len(self.history[Door._open_hist_key]))
+        str_list = ["{}'s door open history:".format(self.name),] + self.history[Door._open_hist_key][:count]
         ret_str = "\n  ".join(str_list)
         return ret_str
 
