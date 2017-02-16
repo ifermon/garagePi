@@ -167,9 +167,6 @@ if __name__ == "__main__":
     GS.lock = RLock()
     q = Queue()
 
-    # Trying to move configuration items into a config file
-    #config = yaml.load("./config.yaml")
-
     # Setup the indivdiual garage doors
     """
     if not config.haskey("doors"):
