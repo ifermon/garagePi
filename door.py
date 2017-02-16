@@ -143,7 +143,7 @@ class Door(object):
 
         # If this is the first time then load empty notification lists
         if Door._event_names[Door.CLOSE_E] not in self.event_notification_list:
-            e = Door._event_names.items()
+            e = Door._event_names.values()
             for k in e:
                 l.debug("k is now {}".format(k))
                 self.event_notification_list[k] = []
