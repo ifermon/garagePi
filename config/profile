@@ -23,10 +23,13 @@ fi
 
 EDITOR=vi
 set -o vi
+export PYTHONDONTWRITEBYTECODE=1
 
 echo "Special commands:"
 echo "  touch stop - disables garage.service from running"
 echo "    You must remove stop file in order for it to automatically start again"
 echo "  sudo systemctl disable garage.service will also prevent garage.service from starting"
-echo "  log - print out logs from garage.service"
+echo "  log - print out log from garage.service"
+echo "  logtail - tail log from garage.service"
 echo "  reload - reloads garage.service (test out new code)"
+

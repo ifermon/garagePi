@@ -380,11 +380,13 @@ class Door(object):
             self.msg_timer = None
         return
 
-    def get_open_history(self, count=DEFAULT_HIST_COUNT):
+    def get_open_history(self, count):
         """ Return a string of the last n times door opened """
+        if count == None: # calling arg will always send count
+            count = DEFAULT_HIST_COUNT
         count = min(count, len(self.history[OPEN_HIST_KEY]))
         str_list = ["{}'s door open history:".format(self.name),] + self.history[OPEN_HIST_KEY][:count]
-        ret_str = "\t\n".join(str_list)
+        ret_str = "\n  ".join(str_list)
         return ret_str
 
     def _sub_event(self, phone_number, event):

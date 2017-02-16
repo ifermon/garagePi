@@ -102,8 +102,9 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
 
-alias ll='ls -lF'
-alias ls='ls -F'
-alias la='ls -Fa'
-alias log='sudo journalctl -f --unit=garage'
+alias ll='ls -lF --color'
+alias ls='ls -F --color'
+alias la='ls -Fa --color'
+alias log='sudo journalctl --unit=garage -e'
+alias logtail='sudo journalctl --unit=garage -f -n100'
 alias reload='touch ~/.nosleep ; sudo systemctl restart garage.service ; rm ~/.nosleep'

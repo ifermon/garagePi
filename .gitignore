@@ -8,6 +8,7 @@ const.py
 *.csv
 .*pref*
 .door_hist_*
+html
 
 # C extensions
 *.so
