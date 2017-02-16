@@ -377,7 +377,7 @@ class Door(object):
         ''' Sends a message via sms '''
         msg = self._get_event_msg(event_type)
         self.l.debug("Sending message '{0}'".format(msg))
-        GS.send_message(msg, self.event_notification_list[event_type])
+        GS.send_message(msg, self.event_notification_list[Door._event_names[event_type]])
         return
 
     def _door_closed(self):
