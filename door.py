@@ -153,10 +153,12 @@ class Door(object):
         else:
             # If this is the first time then load empty notification lists
             e = Door._event_names.values()
+            self.event_notification_list = []
             for k in e:
                 l.debug("k is now {}".format(k))
                 self.event_notification_list[k] = []
             self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY] = self.event_notification_list
+            self.preferences.sync()
 
         # Now set up the pins
         # Multiple processes are setting up pins, so supress warnings
@@ -411,7 +413,7 @@ class Door(object):
     def sub_event(self, event, phone_number):
         if phone_number not in self.event_notification_list[event]:
             self.event_notification_list[event].append(phone_number)
-            self.event_notification_list.sync()
+            self.preferences.sync()
         self.l.debug("Event notification list: {}".format(self.event_notification_list))
         return
 
@@ -419,7 +421,7 @@ class Door(object):
         """ Remove phone number from notifications """
         if phone_number in self.event_notification_list[event]:
             self.event_notification_list[event].remove(phone_number)
-            self.event_notification_list.sync()
+            self.preferences.sync()
         self.l.debug("Event notification list: {}".format(self.event_notification_list))
         return
 
