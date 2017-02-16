@@ -145,6 +145,7 @@ class Door(object):
         if Door._event_names[Door.CLOSE_E] not in self.event_notification_list:
             e = Door._event_names.items()
             for k in e:
+                l.debug("k is now {}".format(k))
                 self.event_notification_list[k] = []
         else: # Log the loaded preferences
             self.l.info("Preferences for {}'s door:".format(self.name))
