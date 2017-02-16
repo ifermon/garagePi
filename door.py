@@ -142,21 +142,21 @@ class Door(object):
         self.preferences = shelve.open(pref_file_name,
                 writeback=True)
 
-        self.event_notification_list = self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY]
-
-        # If this is the first time then load empty notification lists
-        if Door.CLOSE_E not in self.event_notification_list:
-            e = Door._event_names.values()
-            for k in e:
-                l.debug("k is now {}".format(k))
-                self.event_notification_list[k] = []
-        else: # Log the loaded preferences
+        if self.preferences.has_key(Door._EVENT_NOTIFICATION_LIST_KEY):
+            self.event_notification_list = self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY]
             self.l.info("Preferences for {}'s door:".format(self.name))
             lstr = ""
             for k, v in self.event_notification_list.iteritems():
                 # noinspection PyProtectedMember
                 lstr = "{}\n\t{}: {}".format(lstr, Door._event_names[k], v)
             self.l.info(lstr)
+        else:
+            # If this is the first time then load empty notification lists
+            e = Door._event_names.values()
+            for k in e:
+                l.debug("k is now {}".format(k))
+                self.event_notification_list[k] = []
+            self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY] = self.event_notification_list
 
         # Now set up the pins
         # Multiple processes are setting up pins, so supress warnings
