@@ -153,7 +153,7 @@ class Door(object):
         else:
             # If this is the first time then load empty notification lists
             e = Door._event_names.values()
-            self.event_notification_list = []
+            self.event_notification_list = {}
             for k in e:
                 l.debug("k is now {}".format(k))
                 self.event_notification_list[k] = []
