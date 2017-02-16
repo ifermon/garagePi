@@ -25,15 +25,17 @@ def list_current_subscriptions(from_number, cmds):
     for d in ivan_door, heather_door:
         e_str = "{}'s door:\n".format(d.name)
         e_check = len(e_str) # We'll check for changes later
-        if d.is_sub_open_event(from_number):
+        if d.is_sub_event(Door.OPEN_E, from_number):
             e_str += " - When door opens\n"
-        if d.is_sub_close_event(from_number):
+        if d.is_sub_event(Door.CLOSE_E, from_number):
             e_str += " - When door closes\n"
-        if d.is_sub_timer_event(from_number):
+        if d.is_sub_event(Door.TIMER_E, from_number):
             e_str += " - When door is left open\n"
-        if d.is_sub_button_event(from_number):
-            e_str += " - Confirmation of open/close\n"
-        if d.is_sub_error_event(from_number):
+        if d.is_sub_event(Door.BUTTON_OPEN_E, from_number):
+            e_str += " - Confirmation of open\n"
+        if d.is_sub_event(Door.BUTTON_CLOSE_E, from_number):
+            e_str += " - Confirmation of close\n"
+        if d.is_sub_event(Door.DOOR_OPENING_ERROR_E, from_number) or d.is_sub_event(Door.DOOR_CLOSING_ERROR_E, from_number):
             e_str += " - If there is an error\n"
         if len(e_str) == e_check:
             # You are not subscribed to anything for this door
@@ -71,7 +73,7 @@ def get_history(from_number, cmds):
     """
     l.info("Got a history command: {}".format(cmds))
     door = _get_door(cmds[1])
-    if door == None:
+    if door is None:
         GS.send_message("Invalid door name '{}'. Use i or h.".format(cmds[1]), [from_number,])
         return
 
@@ -92,21 +94,23 @@ def subscribe(from_number, cmds):
     """
     l.info("Got a subscribe command: {}".format(cmds))
     door = _get_door(cmds[1])
-    if door == None:
+    if door is None:
         GS.send_message("Invalid door name '{}'. Use i or h.".format(cmds[1]), [from_number,])
         return
 
     event_type = cmds[2]
     if event_type == "timer":
-        door.sub_timer_event(from_number)
+        door.sub_event(Door.TIMER_E, from_number)
     elif event_type == "open":
-        door.sub_open_event(from_number)
+        door.sub_event(Door.OPEN_E, from_number)
     elif event_type == "close":
-        door.sub_close_event(from_number)
+        door.sub_event(Door.CLOSE_E, from_number)
     elif event_type == "error":
-        door.sub_error_event(from_number)
+        door.sub_event(Door.DOOR_OPENING_ERROR_E, from_number)
+        door.sub_event(Door.DOOR_CLOSING_ERROR_E, from_number)
     elif event_type == "button":
-        door.sub_button_event(from_number)
+        door.sub_event(Door.BUTTON_CLOSE_E, from_number)
+        door.sub_event(Door.BUTTON_OPEN_E, from_number)
     else: # Should not happen, but users can do typos
         l.info("Unknown event type {}.".fomat(event_type))
         GS.send_message("Unknown event type {}. Use timer, open, close, error or button".fomat(event_type),
@@ -122,21 +126,23 @@ def unsubscribe(from_number, cmds):
     """
     l.info("Got an unsubscribe command: {}".format(cmds))
     door = _get_door(cmds[1])
-    if door == None:
+    if door is None:
         GS.send_message("Invalid door name '{}'. Use i or h.".format(cmds[1]), [from_number, ])
         return
 
     event_type = cmds[2]
     if event_type == "timer":
-        door.unsub_timer_event(from_number)
+        door.unsub_event(Door.TIMER_E, from_number)
     elif event_type == "open":
-        door.unsub_open_event(from_number)
+        door.unsub_event(Door.OPEN_E, from_number)
     elif event_type == "close":
-        door.unsub_close_event(from_number)
+        door.unsub_event(Door.CLOSE_E, from_number)
     elif event_type == "error":
-        door.unsub_error_event(from_number)
+        door.unsub_event(Door.DOOR_OPENING_ERROR_E, from_number)
+        door.unsub_event(Door.DOOR_CLOSING_ERROR_E, from_number)
     elif event_type == "button":
-        door.unsub_button_event(from_number)
+        door.unsub_event(Door.BUTTON_CLOSE_E, from_number)
+        door.unsub_event(Door.BUTTON_OPEN_E, from_number)
     else:
         l.info("Unknown event type {}.".fomat(event_type))
         GS.send_message("Unknown event type {}. Use timer, open, close, error or button".fomat(event_type),
@@ -149,7 +155,7 @@ def ret_status(from_number, cmds):
     """ Build the status message to send back to texter """
     s1 = "Ivan's door is {0}.".format(ivan_door.get_state_str().lower())
     s2 = "Heather's door is {0}.".format(heather_door.get_state_str().lower())
-    if GS.is_dark() == True: # i.e. it's night time
+    if GS.is_dark(): # i.e. it's night time
             s3 = "The light is {0}.".format(light_monitor.get_light_str().lower())
     else:
             s3 = "It's daytime so light state is unknown."

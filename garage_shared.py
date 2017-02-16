@@ -77,10 +77,6 @@ def configure_logging():
             sys.version))
     return l
 
-# Return reference to logger by name
-def getLogger(name=loggerName):
-    return logging.getLogger(name)
-
 # Utility function to get seconds until 10pm (time to wake and check door)
 def secs_until_10pm():
     next_10pm = dt.datetime.today().replace(hour=22, minute=0, 
