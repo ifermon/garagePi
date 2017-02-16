@@ -30,8 +30,9 @@ class Door(object):
     # Define constants
     OPENED = 0 # Value of pin state when door is opened (circut open)
     CLOSED = 1 # Value of pin state when door is closed (circut closed)
-    _open_hist_key = "Open"
-    _close_hist_key = "Close"
+    _OPEN_HIST_KEY = "Open"
+    _CLOSE_HIST_KEY = "Close"
+    _EVENT_NOTIFICATION_LIST_KEY = "Event notifications"
     _default_hist_count = 5
     _power_pin = 24
     _initial_wait_time = 300 # Time in secs before first nag msg is sent when door is left opened
@@ -126,23 +127,25 @@ class Door(object):
         self.msg_timer = None
         self.door_last_opened = None
 
-        # Load any previous preferences for subscriptions
-        pref_file_name = const.door_pref_dir + "/.door_preferences_" + self.name
-        self.l.debug ("Preference file name: {}".format(pref_file_name))
-        self.event_notification_list = shelve.open(pref_file_name,
-                writeback=True)
-
         # Load any existing history
         hist_file_name = const.door_hist_dir + "/.door_hist_" + self.name
         self.l.debug ("History file name: {}".format(hist_file_name))
         self.history = shelve.open(hist_file_name, writeback=True)
-        if not self.history.has_key(Door._open_hist_key):
-            self.history[Door._open_hist_key] = []
-        if not self.history.has_key(Door._close_hist_key):
-            self.history[Door._close_hist_key] = []
+        if not self.history.has_key(Door._OPEN_HIST_KEY):
+            self.history[Door._OPEN_HIST_KEY] = []
+        if not self.history.has_key(Door._CLOSE_HIST_KEY):
+            self.history[Door._CLOSE_HIST_KEY] = []
+
+        # Load any previous preferences for subscriptions
+        pref_file_name = const.door_pref_dir + "/.door_preferences_" + self.name
+        self.l.debug ("Preference file name: {}".format(pref_file_name))
+        self.preferences = shelve.open(pref_file_name,
+                writeback=True)
+
+        self.event_notification_list = self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY]
 
         # If this is the first time then load empty notification lists
-        if Door._event_names[Door.CLOSE_E] not in self.event_notification_list:
+        if Door.CLOSE_E not in self.event_notification_list:
             e = Door._event_names.values()
             for k in e:
                 l.debug("k is now {}".format(k))
@@ -327,7 +330,7 @@ class Door(object):
         else:
             # Record the time last opened if event is "new"
             self.door_last_opened = time.ctime()
-            self.history[Door._open_hist_key].insert(0, self.door_last_opened)
+            self.history[Door._OPEN_HIST_KEY].insert(0, self.door_last_opened)
             self.history.sync()
             # Now send msg and set a msg timer so we don't send more messages
             self._send_msg(Door.OPEN_E)
@@ -391,7 +394,7 @@ class Door(object):
             self.l.error("Door closed and no open msg_timer - should not happen")
         else:
             self.msg_timer.cancel()
-            self.history[Door._close_hist_key].insert(0, time.ctime())
+            self.history[Door._CLOSE_HIST_KEY].insert(0, time.ctime())
             self.history.sync()
             self.msg_timer = None
         return
@@ -400,8 +403,8 @@ class Door(object):
         """ Return a string of the last n times door opened """
         if count is None: # calling arg will always send count
             count = Door._default_hist_count
-        count = min(count, len(self.history[Door._open_hist_key]))
-        str_list = ["{}'s door open history:".format(self.name),] + self.history[Door._open_hist_key][:count]
+        count = min(count, len(self.history[Door._OPEN_HIST_KEY]))
+        str_list = ["{}'s door open history:".format(self.name),] + self.history[Door._OPEN_HIST_KEY][:count]
         ret_str = "\n  ".join(str_list)
         return ret_str
 
