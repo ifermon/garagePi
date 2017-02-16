@@ -70,6 +70,11 @@ class Door(object):
     }
 
     @staticmethod
+    def now_str():
+        ''' Return string representation of right now'''
+        return time.strftime("%a %b %d %Y @ %I:%M:%S %p")
+
+    @staticmethod
     def get_all_event_types():
         '''
             Utility method to return a list of all valid events for class Door
@@ -152,7 +157,7 @@ class Door(object):
             self.l.info(lstr)
         else:
             # If this is the first time then load empty notification lists
-            e = Door._event_names.values()
+            e = Door._event_names.keys()
             self.event_notification_list = {}
             for k in e:
                 l.debug("k is now {}".format(k))
@@ -186,7 +191,7 @@ class Door(object):
             self.l.info("Door already opened at startup")
             self.msg_timer = Timer(Door._initial_wait_time, self._quiet_time_over)
             self.msg_timer.start()
-            self.door_last_opened = time.ctime()
+            self.door_last_opened = Door.now_str()
 
         self.l.info("\n\tName: {0}\n".format(door_name) +
                 "\tProcess name: {0}\n".format(mp.current_process().name) +
@@ -331,7 +336,7 @@ class Door(object):
             self.msg_timer.cancel()
         else:
             # Record the time last opened if event is "new"
-            self.door_last_opened = time.ctime()
+            self.door_last_opened = Door.now_str()
             self.history[Door._OPEN_HIST_KEY].insert(0, self.door_last_opened)
             self.history.sync()
             # Now send msg and set a msg timer so we don't send more messages
@@ -358,7 +363,7 @@ class Door(object):
         return
 
     def _get_event_msg(self, event_type):
-        now = time.ctime(time.time())
+        now = Door.now_str()
         if self.door_last_opened is None:
             dlo = now
         else:
@@ -396,7 +401,7 @@ class Door(object):
             self.l.error("Door closed and no open msg_timer - should not happen")
         else:
             self.msg_timer.cancel()
-            self.history[Door._CLOSE_HIST_KEY].insert(0, time.ctime())
+            self.history[Door._CLOSE_HIST_KEY].insert(0, Door.now_str())
             self.history.sync()
             self.msg_timer = None
         return

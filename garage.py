@@ -72,9 +72,12 @@ def get_history(from_number, cmds):
         Get the history of open / close events for door
     """
     l.info("Got a history command: {}".format(cmds))
-    door = _get_door(cmds[1])
+    if len(cmds) < 2:
+        door = None
+    else:
+        door = _get_door(cmds[1])
     if door is None:
-        GS.send_message("Invalid door name '{}'. Use i or h.".format(cmds[1]), [from_number,])
+        GS.send_message("Invalid door name '{}'. Use i or h.".format(door), [from_number,])
         return
 
     if len(cmds) > 2: #We should have a count
