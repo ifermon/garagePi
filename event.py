@@ -32,3 +32,5 @@ if __name__ == "__main__":
     a = Event("a", "a msg", grp)
     b = Event("b", "b msg")
     c = Event("c", "c msg", grp)
+
+    print(c.__dict__)

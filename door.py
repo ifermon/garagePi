@@ -108,7 +108,11 @@ class Door(object):
         self.log_level = log_level
         return
 
-    # noinspection PyProtectedMember
+    @property
+    def id(self):
+        ''' persistent id for pickling event notifications'''
+        return self._id
+
     def __init__(self, open_close_state_pin, push_button_pin, door_name,
             resource_lock):
         '''
@@ -134,15 +138,16 @@ class Door(object):
         self.push_button_pin = push_button_pin
         self.msg_timer = None
         self.door_last_opened = None
+        self._id = type(self) + self.name
 
         # Create the events with customized messages
-        self.CLOSE_E = Event("Close Event", "{}'s door was closed.".format(self.name), self)
-        self.OPEN_E = Event("Open Event", "{}'s door was opened.".format(self.name))
-        self.TIMER_E = Event("Timer Event", "{}'s door is still opened.".format(self.name), self)
-        self.DOOR_CLOSING_ERROR_E = Event("Door Closing Error Event", "Error closing {}'s door.".format(self.name), self)
-        self.DOOR_OPENING_ERROR_E = Event("Door Opening Error Event", "Error opening {}'s door.".format(self.name), self)
-        self.BUTTON_CLOSE_E = Event("Button Close Event", "Confirming {}'s door closed.".format(self.name), self)
-        self.BUTTON_OPEN_E = Event("Button Open Event", "Confirming {}'s door opened.".format(self.name), self)
+        self.CLOSE_E = Event("Close Event", "{}'s door was closed.".format(self.name), self.id)
+        self.OPEN_E = Event("Open Event", "{}'s door was opened.".format(self.name), self.id)
+        self.TIMER_E = Event("Timer Event", "{}'s door is still opened.".format(self.name), self.id)
+        self.DOOR_CLOSING_ERROR_E = Event("Door Closing Error Event", "Error closing {}'s door.".format(self.name), self.id)
+        self.DOOR_OPENING_ERROR_E = Event("Door Opening Error Event", "Error opening {}'s door.".format(self.name), self.id)
+        self.BUTTON_CLOSE_E = Event("Button Close Event", "Confirming {}'s door closed.".format(self.name), self.id)
+        self.BUTTON_OPEN_E = Event("Button Open Event", "Confirming {}'s door opened.".format(self.name), self.id)
 
         # Load any existing history
         hist_file_name = const.door_hist_dir + "/.door_hist_" + self.name
