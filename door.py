@@ -136,11 +136,11 @@ class Door(object):
         self.door_last_opened = None
 
         # Create the events with customized messages
-        self.CLOSE_E = Event("Close Event", "{}'s door was closed on {}.".format(self.name))
-        self.OPEN_E = Event("Open Event", "{}'s door was opened on {}.".format(self.name))
-        self.TIMER_E = Event("Timer Event", "{}'s door is still opened at {}.".format(self.name))
-        self.DOOR_CLOSING_ERROR_E = Event("Door Closing Error Event", "Error closing {}'s door on {}.".format(self.name))
-        self.DOOR_OPENING_ERROR_E = Event("Door Opening Error Event", "Error opening {}'s door on {}.".format(self.name))
+        self.CLOSE_E = Event("Close Event", "{}'s door was closed.".format(self.name))
+        self.OPEN_E = Event("Open Event", "{}'s door was opened.".format(self.name))
+        self.TIMER_E = Event("Timer Event", "{}'s door is still opened.".format(self.name))
+        self.DOOR_CLOSING_ERROR_E = Event("Door Closing Error Event", "Error closing {}'s door.".format(self.name))
+        self.DOOR_OPENING_ERROR_E = Event("Door Opening Error Event", "Error opening {}'s door.".format(self.name))
         self.BUTTON_CLOSE_E = Event("Button Close Event", "Confirming {}'s door closed.".format(self.name))
         self.BUTTON_OPEN_E = Event("Button Open Event", "Confirming {}'s door opened.".format(self.name))
 
