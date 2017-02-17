@@ -7,6 +7,7 @@ from threading import Timer
 import logging
 import const
 import shelve
+from event import Event
 
 # Set up module logging
 l = logging.getLogger(__name__)
@@ -40,6 +41,7 @@ class Door(object):
     _transition_wait_time = 30 # Time in secs to wait for door operation to complete (open/close)
 
     # Events used for sending messages / publishing messages
+    '''
     CLOSE_E = 100
     OPEN_E = 101
     TIMER_E = 102
@@ -68,6 +70,7 @@ class Door(object):
         BUTTON_CLOSE_E: "Button Close Event",
         BUTTON_OPEN_E: "Button Open Event"
     }
+    '''
 
     @staticmethod
     def now_str():
@@ -125,12 +128,21 @@ class Door(object):
         self.l = logging.getLogger(door_name)
         self.l.setLevel(logging.DEBUG)
 
-        # access the logger and set up logging
+        # Set up basic instance vars
         self.name = door_name
         self.open_close_state_pin = open_close_state_pin
         self.push_button_pin = push_button_pin
         self.msg_timer = None
         self.door_last_opened = None
+
+        # Create the events with customized messages
+        self.CLOSE_E = Event("Close Event", "{}'s door was closed on {}.".format(self.name))
+        self.OPEN_E = Event("Open Event", "{}'s door was opened on {}.".format(self.name))
+        self.TIMER_E = Event("Timer Event", "{}'s door is still opened at {}.".format(self.name))
+        self.DOOR_CLOSING_ERROR_E = Event("Door Closing Error Event", "Error closing {}'s door on {}.".format(self.name))
+        self.DOOR_OPENING_ERROR_E = Event("Door Opening Error Event", "Error opening {}'s door on {}.".format(self.name))
+        self.BUTTON_CLOSE_E = Event("Button Close Event", "Confirming {}'s door closed.".format(self.name))
+        self.BUTTON_OPEN_E = Event("Button Open Event", "Confirming {}'s door opened.".format(self.name))
 
         # Load any existing history
         hist_file_name = const.door_hist_dir + "/.door_hist_" + self.name
@@ -256,18 +268,18 @@ class Door(object):
         if begin_state == Door.CLOSED:
             if self.get_status() == Door.CLOSED:
                 """ Failed at opening door, send message """
-                self._send_msg(Door.DOOR_OPENING_ERROR_E)
+                self._send_msg(self.DOOR_OPENING_ERROR_E)
             else:
                 self.l.info("{}'s door was closed, we opened it".format(self.name))
-                self._send_msg(Door.BUTTON_OPEN_E)
+                self._send_msg(self.BUTTON_OPEN_E)
         elif begin_state == Door.OPENED:
             """ Let's confirm that the door was closed"""
             if self.get_status() != Door.CLOSED:
                 self.l.error("{}'s door did not close as expected".format(self.name))
-                self._send_msg(Door.DOOR_CLOSING_ERROR_E)
+                self._send_msg(self.DOOR_CLOSING_ERROR_E)
             else: # Door closed as expected
                 self.l.debug("{}'s door closed after pressing button".format(self.name))
-                self._send_msg(Door.BUTTON_CLOSE_E)
+                self._send_msg(self.BUTTON_CLOSE_E)
         else:
             self.l.error("Unknown error pushing button - door in unknown state")
         return
@@ -340,7 +352,7 @@ class Door(object):
             self.history[Door._OPEN_HIST_KEY].insert(0, self.door_last_opened)
             self.history.sync()
             # Now send msg and set a msg timer so we don't send more messages
-            self._send_msg(Door.OPEN_E)
+            self._send_msg(self.OPEN_E)
 
         # Set a timer so we don't bother with repeated messages
         self.msg_timer = Timer(Door._initial_wait_time, self._quiet_time_over)
@@ -356,37 +368,16 @@ class Door(object):
         # Check to see if door is still opened, if so, set timer to check
         # again in 30 mins
         if self.get_status() == Door.OPENED:
-            self._send_msg(Door.TIMER_E)
+            self._send_msg(self.TIMER_E)
             self.msg_timer = Timer(Door._repeat_wait_time, self._quiet_time_over)
             self.msg_timer.start()
         self.l.debug("Leaving quiet timer")
         return
 
-    def _get_event_msg(self, event_type):
-        now = Door.now_str()
-        if self.door_last_opened is None:
-            dlo = now
-        else:
-            dlo = self.door_last_opened
-        if event_type == Door.TIMER_E:
-            ret_str = Door._event_msgs[Door.TIMER_E].format(self.name, now)
-        elif event_type == Door.DOOR_OPENING_ERROR_E:
-            ret_str = Door._event_msgs[Door.DOOR_OPENING_ERROR_E].format(self.name, now)
-        elif event_type == Door.BUTTON_OPEN_E:
-            ret_str = Door._event_msgs[Door.BUTTON_OPEN_E].format(self.name)
-        elif event_type == Door.DOOR_CLOSING_ERROR_E:
-            ret_str = Door._event_msgs[Door.DOOR_CLOSING_ERROR_E].format(self.name, now)
-        elif event_type == Door.BUTTON_CLOSE_E:
-            ret_str = Door._event_msgs[Door.BUTTON_CLOSE_E].format(self.name)
-        elif event_type == Door.OPEN_E:
-            ret_str = Door._event_msgs[Door.OPEN_E].format(self.name, dlo)
-        else:
-            ret_str = "Invalid event"
-        return ret_str
-
-    def _send_msg(self, event_type):
+    def _send_msg(self, event):
         ''' Sends a message via sms '''
-        msg = self._get_event_msg(event_type)
+        # REMOVE IF WORKING msg = self._get_event_msg(event_type)
+        msg = event.msg
         self.l.debug("Sending message '{0}'".format(msg))
         GS.send_message(msg, self.event_notification_list[event_type])
         return
