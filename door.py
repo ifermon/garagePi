@@ -136,13 +136,13 @@ class Door(object):
         self.door_last_opened = None
 
         # Create the events with customized messages
-        self.CLOSE_E = Event("Close Event", "{}'s door was closed.".format(self.name))
+        self.CLOSE_E = Event("Close Event", "{}'s door was closed.".format(self.name), self)
         self.OPEN_E = Event("Open Event", "{}'s door was opened.".format(self.name))
-        self.TIMER_E = Event("Timer Event", "{}'s door is still opened.".format(self.name))
-        self.DOOR_CLOSING_ERROR_E = Event("Door Closing Error Event", "Error closing {}'s door.".format(self.name))
-        self.DOOR_OPENING_ERROR_E = Event("Door Opening Error Event", "Error opening {}'s door.".format(self.name))
-        self.BUTTON_CLOSE_E = Event("Button Close Event", "Confirming {}'s door closed.".format(self.name))
-        self.BUTTON_OPEN_E = Event("Button Open Event", "Confirming {}'s door opened.".format(self.name))
+        self.TIMER_E = Event("Timer Event", "{}'s door is still opened.".format(self.name), self)
+        self.DOOR_CLOSING_ERROR_E = Event("Door Closing Error Event", "Error closing {}'s door.".format(self.name), self)
+        self.DOOR_OPENING_ERROR_E = Event("Door Opening Error Event", "Error opening {}'s door.".format(self.name), self)
+        self.BUTTON_CLOSE_E = Event("Button Close Event", "Confirming {}'s door closed.".format(self.name), self)
+        self.BUTTON_OPEN_E = Event("Button Open Event", "Confirming {}'s door opened.".format(self.name), self)
 
         # Load any existing history
         hist_file_name = const.door_hist_dir + "/.door_hist_" + self.name
@@ -156,24 +156,22 @@ class Door(object):
         # Load any previous preferences for subscriptions
         pref_file_name = const.door_pref_dir + "/.door_preferences_" + self.name
         self.l.debug ("Preference file name: {}".format(pref_file_name))
-        self.preferences = shelve.open(pref_file_name,
-                writeback=True)
+        self.preferences = shelve.open(pref_file_name, writeback=True)
 
         if self.preferences.has_key(Door._EVENT_NOTIFICATION_LIST_KEY):
             self.event_notification_list = self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY]
             self.l.info("Preferences for {}'s door:".format(self.name))
             lstr = ""
-            for k, v in self.event_notification_list.iteritems():
+            for e in self.event_notification_list:
                 # noinspection PyProtectedMember
-                lstr = "{}\n\t{}: {}".format(lstr, Door._event_names[k], v)
+                lstr = "{}\n\t{}: {}".format(lstr, e.name)
             self.l.info(lstr)
         else:
             # If this is the first time then load empty notification lists
-            e = Door._event_names.keys()
             self.event_notification_list = {}
-            for k in e:
-                l.debug("k is now {}".format(k))
-                self.event_notification_list[k] = []
+            for e in Event.get_events(self):
+                l.debug("e is now {}".format(e))
+                self.event_notification_list[e] = []
             self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY] = self.event_notification_list
             self.preferences.sync()
 
