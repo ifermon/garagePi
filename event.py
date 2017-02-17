@@ -7,9 +7,7 @@ class Event(object):
         self._msg = msg
         self._my_group = group_key 
         groups = Event._event_groups
-        l = groups.get(group_key, [])
-        groups[group_key] = l.append(self)
-        print(Event._event_groups)
+        groups[group_key] = groups.get(group_key, []) + [self,]
         return
 
     @property
@@ -26,3 +24,11 @@ class Event(object):
 
     def __str__(self):
         return self._name
+
+
+if __name__ == "__main__":
+
+    grp = "a group"
+    a = Event("a", "a msg", grp)
+    b = Event("b", "b msg")
+    c = Event("c", "c msg", grp)
