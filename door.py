@@ -50,26 +50,6 @@ class Door(object):
     BUTTON_CLOSE_E = 105
     BUTTON_OPEN_E = 106
 
-    # Events used for sending messages / publishing messages
-    _event_msgs = {
-        CLOSE_E: "{}'s door was closed on {}.",
-        OPEN_E: "{}'s door was opened on {}.",
-        TIMER_E: "{}'s door is still opened at {}.",
-        DOOR_CLOSING_ERROR_E: "Error closing {}'s door on {}.",
-        DOOR_OPENING_ERROR_E: "Error opening {}'s door on {}.",
-        BUTTON_CLOSE_E: "Confirming {}'s door closed.",
-        BUTTON_OPEN_E: "Confirming {}'s door opened."
-    }
-
-    _event_names = {
-        CLOSE_E: "Close Event",
-        OPEN_E: "Open Event",
-        TIMER_E: "Timer Event",
-        DOOR_CLOSING_ERROR_E: "Door Closing Error Event",
-        DOOR_OPENING_ERROR_E: "Door Opening Error Event",
-        BUTTON_CLOSE_E: "Button Close Event",
-        BUTTON_OPEN_E: "Button Open Event"
-    }
     '''
 
     @staticmethod
