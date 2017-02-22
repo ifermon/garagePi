@@ -132,7 +132,7 @@ class Door(object):
         if Door._data_f is None:
             Door._data_f = shelve.open(const.door_hist_dir + Door._DATA_FILE, writeback=True)
         if self.name in Door._data_f:
-            self._saved_data_dict = f[self.name]
+            self._saved_data_dict = Door._data_f[self.name]
         else:  # Build out initial data structures
             self._saved_data_dict = {
                 Door._OPEN_HIST_KEY: [],
