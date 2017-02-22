@@ -397,6 +397,8 @@ class Door(object):
         if phone_number not in self._event_sub_list[event]:
             self._event_sub_list[event].append(phone_number)
         self.l.debug("Event notification list: {}".format(self._event_sub_list))
+        self.l.debug(str(self._saved_data_dict))
+        self.l.debug(str(Door._data_f))
         Door._data_f.sync()
         return
 
