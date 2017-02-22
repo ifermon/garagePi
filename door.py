@@ -132,7 +132,7 @@ class Door(object):
         if self.name in f:
             self._saved_data_dict = f[self.name]
         else:  # Build out initial data structures
-            self._saved_data_dict[self.name] = {
+            self._saved_data_dict = {
                 Door._OPEN_HIST_KEY: [],
                 Door._CLOSE_HIST_KEY: [],
                 Door._EVENT_SUB_KEY: {}
