@@ -147,8 +147,8 @@ def unsubscribe(from_number, cmds):
         door.unsub_event(Door.BUTTON_CLOSE_E, from_number)
         door.unsub_event(Door.BUTTON_OPEN_E, from_number)
     else:
-        l.info("Unknown event type {}.".fomat(event_type))
-        GS.send_message("Unknown event type {}. Use timer, open, close, error or button".fomat(event_type),
+        l.info("Unknown event type {}.".format(event_type))
+        GS.send_message("Unknown event type {}. Use timer, open, close, error or button".format(event_type),
                         [from_number])
         return
     GS.send_message("Unsubscribe to {} events for {}'s door confirmed!".format(event_type, door))

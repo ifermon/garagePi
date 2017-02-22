@@ -5,7 +5,7 @@ import time
 import RPi.GPIO as GPIO
 from threading import Timer
 import logging
-import const
+#import const
 import shelve
 from event import Event
 
@@ -28,19 +28,20 @@ class Door(object):
             is an open circut, _CLOSED is the opposite.
     '''
 
-     # Define class constants
+    # Define class constants
     _OPENED = 0  # Value of pin state when door is opened (circut open)
     _CLOSED = 1  # Value of pin state when door is closed (circut closed)
-    _OPEN_HIST_KEY = "Open"
-    _CLOSE_HIST_KEY = "Close"
-    _EVENT_NOTIFICATION_LIST_KEY = "Event notifications"
+    _OPEN_HIST_KEY = "Open history"
+    _CLOSE_HIST_KEY = "Close history"
+    _EVENT_SUB_KEY = "Event subscriptions"
     _default_hist_count = 5
     _power_pin = 24
     _initial_wait_time = 300  # Time in secs before first nag msg is sent when door is left opened
     _repeat_wait_time = 1800  # Time in secs before repeat nag msg is sent
     _transition_wait_time = 30  # Time in secs to wait for door operation to complete (open/close)
+    _DATA_FILE = '.door_saved_data.db'
 
-     # Events support by class
+    # Events support by class
     CLOSE_E = Event("Close Event")
     OPEN_E = Event("Open Event")
     TIMER_E = Event("Timer Event")
@@ -105,11 +106,11 @@ class Door(object):
         self.lock = resource_lock
         self.lock.acquire()
 
-         # Setup logging just for this door
+        # Setup logging just for this door
         self.l = logging.getLogger(door_name)
         self.l.setLevel(logging.DEBUG)
 
-         # Set up basic instance vars
+        # Set up basic instance vars
         self.name = door_name
         self.open_close_state_pin = open_close_state_pin
         self.push_button_pin = push_button_pin
@@ -117,7 +118,7 @@ class Door(object):
         self.door_last_opened = None
         self._id = str(type(self)) + self.name
 
-         # Create the events with customized messages
+        # Create the events with customized messages
         self.CLOSE_E = Door.CLOSE_E.localize("{}'s door was closed.".format(self.name))
         self.OPEN_E = Door.OPEN_E.localize("{}'s door was opened.".format(self.name))
         self.TIMER_E = Door.TIMER_E.localize("{}'s door is still opened.".format(self.name))
@@ -126,7 +127,26 @@ class Door(object):
         self.BUTTON_CLOSE_E = Door.BUTTON_CLOSE_E.localize("Confirming {}'s door closed.".format(self.name))
         self.BUTTON_OPEN_E = Door.BUTTON_OPEN_E.localize("Confirming {}'s door opened.".format(self.name))
 
-         # Load any existing history
+        # Load any saved data, this includes subscriptions and history
+        f = shelve.open(Door._DATA_FILE, writeback=True)
+        if self.name in f:
+            self._saved_data_dict = f[self.name]
+        else:  # Build out initial data structures
+            self._saved_data_dict[self.name] = {
+                Door._OPEN_HIST_KEY: [],
+                Door._CLOSE_HIST_KEY: [],
+                Door._EVENT_SUB_KEY: {}
+            }
+            for e in Door.supported_events():
+                self._saved_data_dict[self.name][Door._EVENT_SUB_KEY][e] = []
+            f[self.name] = self._saved_data_dict
+        # Should be built out, now print
+        self.l.debug(str(self._saved_data_dict))
+        self._close_history_list = self._saved_data_dict[Door._CLOSE_HIST_KEY]
+        self._open_history_list = self._saved_data_dict[Door._OPEN_HIST_KEY]
+        self._event_sub_list = self._saved_data_dict[Door._EVENT_SUB_KEY]
+
+        """
         hist_file_name = const.door_hist_dir + "/.door_hist_" + self.name
         self.l.debug("History file name: {}".format(hist_file_name))
         self.history = shelve.open(hist_file_name, writeback=True)
@@ -135,7 +155,8 @@ class Door(object):
         if Door._CLOSE_HIST_KEY not in self.history:
             self.history[Door._CLOSE_HIST_KEY] = []
 
-         # Load any previous preferences for subscriptions
+       # Load any previous preferences for subscriptions
+
         pref_file_name = const.door_pref_dir + "/.door_preferences_" + self.name
         self.l.debug("Preference file name: {}".format(pref_file_name))
         self.preferences = shelve.open(pref_file_name, writeback=True)
@@ -148,35 +169,36 @@ class Door(object):
                 lstr = "{}\n\t{}: {}".format(lstr, e.name, e.msg)
             self.l.info(lstr)
         else:
-             # If this is the first time then load empty notification lists
+            # If this is the first time then load empty notification lists
             self.event_notification_list = {}
             for e in Door.supported_events():
                 l.debug("e is now {}".format(e))
                 self.event_notification_list[e] = []
             self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY] = self.event_notification_list
             self.preferences.sync()
+        """
 
-         # Now set up the pins
-         # Multiple processes are setting up pins, so supress warnings
+       # Now set up the pins
+       # Multiple processes are setting up pins, so supress warnings
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
 
-         # Settings for reed switch
-        #GPIO.setup(self.open_close_state_pin, GPIO.IN, initial=GPIO.LOW,
+       # Settings for reed switch
+       # GPIO.setup(self.open_close_state_pin, GPIO.IN, initial=GPIO.LOW,
         GPIO.setup(self.open_close_state_pin, GPIO.IN,
                 pull_up_down=GPIO.PUD_DOWN)
         GPIO.setup(Door._power_pin, GPIO.OUT, initial=GPIO.LOW)
         GPIO.output(Door._power_pin, True)
 
-         # Settings for relay switch (door switch)
+       # Settings for relay switch (door switch)
         GPIO.setup(self.push_button_pin, GPIO.OUT, initial=GPIO.HIGH)
 
-         # Set a callback function, when it detects a change
-         # this function will be called
+       # Set a callback function, when it detects a change
+       # this function will be called
         GPIO.add_event_detect(self.open_close_state_pin, GPIO.RISING,
                 callback = self._door_moving_callback, bouncetime=2000)
 
-         # Now get and set the current state of the door
+       # Now get and set the current state of the door
         self.last_state = self.get_status()
         if self.last_state == Door._OPENED:
             self.l.info("Door already opened at startup")
@@ -208,11 +230,11 @@ class Door(object):
         self.l.debug("In snooze with these commands: {}".format(cmds))
         snooze_time = None
 
-         # If there is a timer then cancel it
+        # If there is a timer then cancel it
         if self.msg_timer is not None:
             self.msg_timer.cancel()
 
-         # If  # of minutes was specififed (cmds[1]) then set new timer with that delay
+        # If  # of minutes was specififed (cmds[1]) then set new timer with that delay
         try:
             snooze_time = cmds[1]  # Did user give a time?
             int(snooze_time)  # Is the argument an int?
@@ -220,13 +242,13 @@ class Door(object):
             GS.send_message("Okay, {}'s door won't bother you again.", [from_number,])
             return  # No snooze time specified, just return
         except ValueError:
-             # Snooze time is not a number, I should send a msg back to user
+            # Snooze time is not a number, I should send a msg back to user
             self.l.debug("Invalid snooze time: {}".format(snooze_time))
             GS.send_message("Snooze time ({}) must be a number.".format(snooze_time),
                             [from_number,])
             return
 
-         # User specified sleep time - set a timer to check again
+        # User specified sleep time - set a timer to check again
         self.msg_timer = Timer(snooze_time, self._quiet_time_over)
         self.msg_timer.start()
         GS.send_message("Okay, I'll remind you in {} minutes if {}'s door is still open".format(snooze_time, self.name),
@@ -272,12 +294,12 @@ class Door(object):
         '''
         self.lock.acquire()
         self.l.debug("Got a callback")
-         # 20 secs should be enough time for the door to complete either
-         # opening or closing, wait till it's done, this also helps us
-         # avoid "floating" calls that may happen from time to time
+        # 20 secs should be enough time for the door to complete either
+        # opening or closing, wait till it's done, this also helps us
+        # avoid "floating" calls that may happen from time to time
         time.sleep(20)
 
-         # Now see if the door state has changed
+        # Now see if the door state has changed
         self.get_status()
         if self.current_state != self.last_state:
             if self.current_state == Door._OPENED:
@@ -302,30 +324,29 @@ class Door(object):
         self.l.info("Got door opened event")
 
         if self.msg_timer is not None:
-             # This should never happen. We should have removed timer when closed
+            # This should never happen. We should have removed timer when closed
             self.l.error("Door opened and we already have msg_timer - error of some kind")
             self.msg_timer.cancel()
         else:
-             # Record the time last opened if event is "new"
+            # Record the time last opened if event is "new"
             self.door_last_opened = Door.now_str()
-            self.history[Door._OPEN_HIST_KEY].insert(0, self.door_last_opened)
-            self.history.sync()
-             # Now send msg and set a msg timer so we don't send more messages
+            self._open_history_list.insert(0, self.door_last_opened)
+            # Now send msg and set a msg timer so we don't send more messages
             self._send_msg(self.OPEN_E)
 
-         # Set a timer so we don't bother with repeated messages
+        # Set a timer so we don't bother with repeated messages
         self.msg_timer = Timer(Door._initial_wait_time, self._quiet_time_over)
         self.msg_timer.start()
         return
 
     def _quiet_time_over(self):
         ''' Clears the quiet time timer, checks to see if door is still opened, and sets another timer if it is '''
-         # Clear the msg timer
+        # Clear the msg timer
         self.l.debug("Quiet time is over - send a message if door still open")
         self.msg_timer = None
 
-         # Check to see if door is still opened, if so, set timer to check
-         # again in 30 mins
+        # Check to see if door is still opened, if so, set timer to check
+        # again in 30 mins
         if self.get_status() == Door._OPENED:
             self._send_msg(self.TIMER_E)
             self.msg_timer = Timer(Door._repeat_wait_time, self._quiet_time_over)
@@ -335,10 +356,10 @@ class Door(object):
 
     def _send_msg(self, event):
         ''' Sends a message via sms '''
-         # REMOVE IF WORKING msg = self._get_event_msg(event_type)
+        # REMOVE IF WORKING msg = self._get_event_msg(event_type)
         msg = event.msg
         self.l.debug("Sending message '{0}'".format(msg))
-        GS.send_message(msg, self.event_notification_list[event])
+        GS.send_message(msg, self._event_sub_list[event])
         return
 
     def _door_closed(self):
@@ -351,8 +372,7 @@ class Door(object):
             self.l.error("Door closed and no open msg_timer - should not happen")
         else:
             self.msg_timer.cancel()
-            self.history[Door._CLOSE_HIST_KEY].insert(0, Door.now_str())
-            self.history.sync()
+            self._close_history_list.insert(0, Door.now_str())
             self.msg_timer = None
         return
 
@@ -360,33 +380,29 @@ class Door(object):
         """ Return a string of the last n times door opened """
         if count is None:  # calling arg will always send count
             count = Door._default_hist_count
-        count = min(count, len(self.history[Door._OPEN_HIST_KEY]))
-        str_list = ["{}'s door open history:".format(self.name),] + self.history[Door._OPEN_HIST_KEY][:count]
+        count = min(count, len(self._open_history_list))
+        str_list = ["{}'s door open history:".format(self.name),] + self._open_history_list[:count]
         ret_str = "\n  ".join(str_list)
         return ret_str
 
     def sub_event(self, event, phone_number):
-        if phone_number not in self.event_notification_list[event]:
-            self.event_notification_list[event].append(phone_number)
-            self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY] = self.event_notification_list
-            self.preferences.sync()
-        self.l.debug("Event notification list: {}".format(self.event_notification_list))
+        if phone_number not in self._event_sub_list[event]:
+            self._event_sub_list[event].append(phone_number)
+        self.l.debug("Event notification list: {}".format(self._event_sub_list))
         return
 
     def unsub_event(self, event, phone_number):
         """ Remove phone number from notifications """
-        if phone_number in self.event_notification_list[event]:
-            self.event_notification_list[event].remove(phone_number)
-            self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY] = self.event_notification_list
-            self.preferences.sync()
-        self.l.debug("Event notification list: {}".format(self.event_notification_list))
+        if phone_number in self._event_sub_list[event]:
+            self._event_sub_list[event].remove(phone_number)
+        self.l.debug("Event notification list: {}".format(self._event_sub_list))
         return
 
     def is_sub_event(self, event, phone_number):
         """ Return true if phone number is subscribed """
-        if event not in self.event_notification_list:
-            ** DO SOMETHING **
-        return phone_number in self.event_notification_list[event]
+        if event not in self._event_sub_list:
+            self._event_sub_list[event] = []
+        return phone_number in self._event_sub_list[event]
 
 
 if __name__ == "__main__":
