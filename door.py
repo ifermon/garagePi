@@ -130,7 +130,7 @@ class Door(object):
 
         # Load any saved data, this includes subscriptions and history
         if Door._data_f is None:
-            Door._data_f = shelve.open(const.door_hist_dir + Door._DATA_FILE, writeback=True)
+            Door._data_f = shelve.open(const.DOOR_DATA_DIR + Door._DATA_FILE, writeback=True)
         if self.name in Door._data_f:
             self._saved_data_dict = Door._data_f[self.name]
         else:  # Build out initial data structures
