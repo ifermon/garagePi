@@ -23,14 +23,14 @@ class Door(object):
             get_status - returns status of door opened or door closed
             sends change - sends a change in status message
 
-            OPENED is the status for garage door opened. Technically it means
+            _OPENED is the status for garage door opened. Technically it means
             that the signal pin cooresponding to the reed switch for the door
-            is an open circut, CLOSED is the opposite.
+            is an open circut, _CLOSED is the opposite.
     '''
 
-    # Define constants
-    OPENED = 0 # Value of pin state when door is opened (circut open)
-    CLOSED = 1 # Value of pin state when door is closed (circut closed)
+    # Define class constants
+    _OPENED = 0 # Value of pin state when door is opened (circut open)
+    _CLOSED = 1 # Value of pin state when door is closed (circut closed)
     _OPEN_HIST_KEY = "Open"
     _CLOSE_HIST_KEY = "Close"
     _EVENT_NOTIFICATION_LIST_KEY = "Event notifications"
@@ -40,17 +40,19 @@ class Door(object):
     _repeat_wait_time = 1800 # Time in secs before repeat nag msg is sent
     _transition_wait_time = 30 # Time in secs to wait for door operation to complete (open/close)
 
-    # Events used for sending messages / publishing messages
-    '''
-    CLOSE_E = 100
-    OPEN_E = 101
-    TIMER_E = 102
-    DOOR_CLOSING_ERROR_E = 103
-    DOOR_OPENING_ERROR_E = 104
-    BUTTON_CLOSE_E = 105
-    BUTTON_OPEN_E = 106
+    # Events support by class
+    CLOSE_E = Event("Close Event")
+    OPEN_E = Event("Open Event")
+    TIMER_E = Event("Timer Event")
+    DOOR_CLOSING_ERROR_E = Event("Door Closing Error Event")
+    DOOR_OPENING_ERROR_E = Event("Door Opening Error Event")
+    BUTTON_CLOSE_E = Event("Button Close Event")
+    BUTTON_OPEN_E = Event("Button Open Event")
 
-    '''
+    @classmethod
+    def supported_events(cls):
+        return [CLOSE_E, OPEN_E, TIMER_E, DOOR_CLOSING_E, DOOR_OPENING_E, BUTTON_CLOSE_E, BUTTON_OPEN_E]
+
 
     @staticmethod
     def now_str():
@@ -74,7 +76,7 @@ class Door(object):
         '''
         if state is None:
             state = self.current_state
-        if state == Door.OPENED:
+        if state == Door._OPENED:
             ret_str = "Opened"
         else:
             ret_str = "Closed"
@@ -118,16 +120,16 @@ class Door(object):
         self.push_button_pin = push_button_pin
         self.msg_timer = None
         self.door_last_opened = None
-        self._id = type(self) + self.name
+        self._id = str(type(self)) + self.name
 
         # Create the events with customized messages
-        self.CLOSE_E = Event("Close Event", "{}'s door was closed.".format(self.name), self.id)
-        self.OPEN_E = Event("Open Event", "{}'s door was opened.".format(self.name), self.id)
-        self.TIMER_E = Event("Timer Event", "{}'s door is still opened.".format(self.name), self.id)
-        self.DOOR_CLOSING_ERROR_E = Event("Door Closing Error Event", "Error closing {}'s door.".format(self.name), self.id)
-        self.DOOR_OPENING_ERROR_E = Event("Door Opening Error Event", "Error opening {}'s door.".format(self.name), self.id)
-        self.BUTTON_CLOSE_E = Event("Button Close Event", "Confirming {}'s door closed.".format(self.name), self.id)
-        self.BUTTON_OPEN_E = Event("Button Open Event", "Confirming {}'s door opened.".format(self.name), self.id)
+        self.CLOSE_E = Door.CLOSE_E.localize("{}'s door was closed.".format(self.name))
+        self.OPEN_E = Door.OPEN_E.localize("{}'s door was opened.".format(self.name))
+        self.TIMER_E = Door.TIMER_E.localize("{}'s door is still opened.".format(self.name))
+        self.DOOR_CLOSING_ERROR_E = Door.DOOR_CLOSING_ERROR_E.localize("Error closing {}'s door.".format(self.name))
+        self.DOOR_OPENING_ERROR_E = Door.DOOR_OPENING_ERROR_E.localize("Error opening {}'s door.".format(self.name))
+        self.BUTTON_CLOSE_E = Door.BUTTON_CLOSE_E.localize("Confirming {}'s door closed.".format(self.name))
+        self.BUTTON_OPEN_E = Door.BUTTON_OPEN_E.localize("Confirming {}'s door opened.".format(self.name))
 
         # Load any existing history
         hist_file_name = const.door_hist_dir + "/.door_hist_" + self.name
@@ -182,7 +184,7 @@ class Door(object):
 
         # Now get and set the current state of the door
         self.last_state = self.get_status()
-        if self.last_state == Door.OPENED:
+        if self.last_state == Door._OPENED:
             self.l.info("Door already opened at startup")
             self.msg_timer = Timer(Door._initial_wait_time, self._quiet_time_over)
             self.msg_timer.start()
@@ -248,16 +250,16 @@ class Door(object):
         self.lock.release()
 
         time.sleep(Door._transition_wait_time)
-        if begin_state == Door.CLOSED:
-            if self.get_status() == Door.CLOSED:
+        if begin_state == Door._CLOSED:
+            if self.get_status() == Door._CLOSED:
                 """ Failed at opening door, send message """
                 self._send_msg(self.DOOR_OPENING_ERROR_E)
             else:
                 self.l.info("{}'s door was closed, we opened it".format(self.name))
                 self._send_msg(self.BUTTON_OPEN_E)
-        elif begin_state == Door.OPENED:
+        elif begin_state == Door._OPENED:
             """ Let's confirm that the door was closed"""
-            if self.get_status() != Door.CLOSED:
+            if self.get_status() != Door._CLOSED:
                 self.l.error("{}'s door did not close as expected".format(self.name))
                 self._send_msg(self.DOOR_CLOSING_ERROR_E)
             else: # Door closed as expected
@@ -273,7 +275,7 @@ class Door(object):
             Locking handled by press_button and get state functions
             Presses button to toggle door if door state is not already open
         '''
-        if self.get_status() == Door.CLOSED:
+        if self.get_status() == Door._CLOSED:
             self.press_button()
         return
 
@@ -283,7 +285,7 @@ class Door(object):
             Locking handled by press_button and get state functions
             Presses button to toggle door if door state is not already closed
         '''
-        if self.get_status() == Door.OPENED:
+        if self.get_status() == Door._OPENED:
             self.press_button()
         return
 
@@ -304,7 +306,7 @@ class Door(object):
         # Now see if the door state has changed
         self.get_status()
         if self.current_state != self.last_state:
-            if self.current_state == Door.OPENED:
+            if self.current_state == Door._OPENED:
                 self._door_opened()
                 self.l.debug("In callback, door opened")
             else:
@@ -350,7 +352,7 @@ class Door(object):
 
         # Check to see if door is still opened, if so, set timer to check
         # again in 30 mins
-        if self.get_status() == Door.OPENED:
+        if self.get_status() == Door._OPENED:
             self._send_msg(self.TIMER_E)
             self.msg_timer = Timer(Door._repeat_wait_time, self._quiet_time_over)
             self.msg_timer.start()
