@@ -28,6 +28,9 @@ class Event(object):
     def __str__(self):
         return self._name
 
+    def __repr__(self):
+        return self._name
+
     def __eq__(self, other):
         return self._name == other._name
 
