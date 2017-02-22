@@ -138,7 +138,7 @@ class Door(object):
                 Door._EVENT_SUB_KEY: {}
             }
             for e in Door.supported_events():
-                self._saved_data_dict[self.name][Door._EVENT_SUB_KEY][e] = []
+                self._saved_data_dict[Door._EVENT_SUB_KEY][e] = []
             f[self.name] = self._saved_data_dict
         # Should be built out, now print
         self.l.debug(str(self._saved_data_dict))
