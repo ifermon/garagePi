@@ -384,6 +384,8 @@ class Door(object):
 
     def is_sub_event(self, event, phone_number):
         """ Return true if phone number is subscribed """
+        if event not in self.event_notification_list:
+            ** DO SOMETHING **
         return phone_number in self.event_notification_list[event]
 
 
