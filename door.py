@@ -156,7 +156,7 @@ class Door(object):
         else:
             # If this is the first time then load empty notification lists
             self.event_notification_list = {}
-            for e in Event.get_events(self):
+            for e in Door.supported_events():
                 l.debug("e is now {}".format(e))
                 self.event_notification_list[e] = []
             self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY] = self.event_notification_list
