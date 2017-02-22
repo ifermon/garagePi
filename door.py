@@ -368,6 +368,7 @@ class Door(object):
     def sub_event(self, event, phone_number):
         if phone_number not in self.event_notification_list[event]:
             self.event_notification_list[event].append(phone_number)
+            self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY] = self.event_notification_list
             self.preferences.sync()
         self.l.debug("Event notification list: {}".format(self.event_notification_list))
         return
@@ -376,6 +377,7 @@ class Door(object):
         """ Remove phone number from notifications """
         if phone_number in self.event_notification_list[event]:
             self.event_notification_list[event].remove(phone_number)
+            self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY] = self.event_notification_list
             self.preferences.sync()
         self.l.debug("Event notification list: {}".format(self.event_notification_list))
         return
