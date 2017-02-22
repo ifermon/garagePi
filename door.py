@@ -51,7 +51,7 @@ class Door(object):
 
     @classmethod
     def supported_events(cls):
-        return [CLOSE_E, OPEN_E, TIMER_E, DOOR_CLOSING_E, DOOR_OPENING_E, BUTTON_CLOSE_E, BUTTON_OPEN_E]
+        return [Door.CLOSE_E, Door.OPEN_E, Door.TIMER_E, Door.DOOR_CLOSING_E, Door.DOOR_OPENING_E, Door.BUTTON_CLOSE_E, Door.BUTTON_OPEN_E]
 
 
     @staticmethod
