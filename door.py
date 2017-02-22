@@ -146,8 +146,7 @@ class Door(object):
             self.l.info("Preferences for {}'s door:".format(self.name))
             lstr = ""
             for e in self.event_notification_list:
-                # noinspection PyProtectedMember
-                lstr = "{}\n\t{}: {}".format(lstr, e.name)
+                lstr = "{}\n\t{}: {}".format(lstr, e.name, e.msg)
             self.l.info(lstr)
         else:
             # If this is the first time then load empty notification lists
