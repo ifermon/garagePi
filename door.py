@@ -362,9 +362,9 @@ class Door(object):
         msg = event.msg
         self.l.debug("Sending message '{0}'".format(msg))
         if event not in self._event_sub_list:
-            self.debug("Event not in list")
-            self.debug(str(self._event_sub_list))
-            self.debug("Event = {}".format(event))
+            self.l.debug("Event not in list")
+            self.l.debug(str(self._event_sub_list))
+            self.l.debug("Event = {}".format(event))
         else:
             GS.send_message(msg, self._event_sub_list[event])
         return
