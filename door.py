@@ -147,7 +147,7 @@ class Door(object):
         self._close_history_list = self._saved_data_dict[Door._CLOSE_HIST_KEY]
         self._open_history_list = self._saved_data_dict[Door._OPEN_HIST_KEY]
         self._event_sub_list = self._saved_data_dict[Door._EVENT_SUB_KEY]
-        self._data_f.sync()
+        Door._data_f.sync()
 
         """
         hist_file_name = const.door_hist_dir + "/.door_hist_" + self.name
@@ -397,7 +397,7 @@ class Door(object):
         if phone_number not in self._event_sub_list[event]:
             self._event_sub_list[event].append(phone_number)
         self.l.debug("Event notification list: {}".format(self._event_sub_list))
-        self._data_f.sync()
+        Door._data_f.sync()
         return
 
     def unsub_event(self, event, phone_number):
@@ -405,7 +405,7 @@ class Door(object):
         if phone_number in self._event_sub_list[event]:
             self._event_sub_list[event].remove(phone_number)
         self.l.debug("Event notification list: {}".format(self._event_sub_list))
-        self._data_f.sync()
+        Door._data_f.sync()
         return
 
     def is_sub_event(self, event, phone_number):
