@@ -51,21 +51,17 @@ class Door(object):
 
     @classmethod
     def supported_events(cls):
-        return [Door.CLOSE_E, Door.OPEN_E, Door.TIMER_E, Door.DOOR_CLOSING_E, Door.DOOR_OPENING_E, Door.BUTTON_CLOSE_E, Door.BUTTON_OPEN_E]
+        '''
+            Utility method to return a list of all valid events for class Door
+        '''
+        return [Door.CLOSE_E, Door.OPEN_E, Door.TIMER_E, Door.DOOR_CLOSING_ERROR_E,
+                Door.DOOR_OPENING_ERROR_E, Door.BUTTON_CLOSE_E, Door.BUTTON_OPEN_E]
 
 
     @staticmethod
     def now_str():
         ''' Return string representation of right now'''
         return time.strftime("%a %b %d %Y @ %I:%M:%S %p")
-
-    @staticmethod
-    def get_all_event_types():
-        '''
-            Utility method to return a list of all valid events for class Door
-        '''
-        return Door._event_names.keys()
-
 
     def get_state_str(self, state=None):
         '''
