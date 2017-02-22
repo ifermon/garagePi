@@ -5,7 +5,7 @@ import time
 import RPi.GPIO as GPIO
 from threading import Timer
 import logging
-#import const
+import const
 import shelve
 from event import Event
 
@@ -128,7 +128,7 @@ class Door(object):
         self.BUTTON_OPEN_E = Door.BUTTON_OPEN_E.localize("Confirming {}'s door opened.".format(self.name))
 
         # Load any saved data, this includes subscriptions and history
-        f = shelve.open(Door._DATA_FILE, writeback=True)
+        f = shelve.open(const.door_hist_dir + Door._DATA_FILE, writeback=True)
         if self.name in f:
             self._saved_data_dict = f[self.name]
         else:  # Build out initial data structures
