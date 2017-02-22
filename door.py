@@ -397,6 +397,7 @@ class Door(object):
         if event not in self._event_sub_list:
             self.l.debug(str(self._event_sub_list))
             self.l.debug("Event = {}".format(event))
+            self.l.debug("does {} == {}? {}".format(event, self._event_sub_list[0], str(event == self.event_sub_list[0])))
         if phone_number not in self._event_sub_list[event]:
             self._event_sub_list[event].append(phone_number)
         self.l.debug("Event notification list: {}".format(self._event_sub_list))
