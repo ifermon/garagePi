@@ -40,6 +40,7 @@ class Door(object):
     _repeat_wait_time = 1800  # Time in secs before repeat nag msg is sent
     _transition_wait_time = 30  # Time in secs to wait for door operation to complete (open/close)
     _DATA_FILE = '.door_saved_data.db'
+    _data_f = None  # The file that stores persistent data, not thread safe, use one per class
 
     # Events support by class
     CLOSE_E = Event("Close Event")
@@ -128,8 +129,9 @@ class Door(object):
         self.BUTTON_OPEN_E = Door.BUTTON_OPEN_E.localize("Confirming {}'s door opened.".format(self.name))
 
         # Load any saved data, this includes subscriptions and history
-        f = shelve.open(const.door_hist_dir + Door._DATA_FILE, writeback=True)
-        if self.name in f:
+        if Door._data_f is None:
+            Door._data_f = shelve.open(const.door_hist_dir + Door._DATA_FILE, writeback=True)
+        if self.name in Door._data_f:
             self._saved_data_dict = f[self.name]
         else:  # Build out initial data structures
             self._saved_data_dict = {
@@ -139,7 +141,7 @@ class Door(object):
             }
             for e in Door.supported_events():
                 self._saved_data_dict[Door._EVENT_SUB_KEY][e] = []
-            f[self.name] = self._saved_data_dict
+            Door._data_f[self.name] = self._saved_data_dict
         # Should be built out, now print
         self.l.debug(str(self._saved_data_dict))
         self._close_history_list = self._saved_data_dict[Door._CLOSE_HIST_KEY]
