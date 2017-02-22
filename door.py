@@ -361,7 +361,12 @@ class Door(object):
         # REMOVE IF WORKING msg = self._get_event_msg(event_type)
         msg = event.msg
         self.l.debug("Sending message '{0}'".format(msg))
-        GS.send_message(msg, self._event_sub_list[event])
+        if event not in self._event_sub_list:
+            self.debug("Event not in list")
+            self.debug(str(self._event_sub_list))
+            self.debug("Event = {}".format(event))
+        else:
+            GS.send_message(msg, self._event_sub_list[event])
         return
 
     def _door_closed(self):
