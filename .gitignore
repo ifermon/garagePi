@@ -9,6 +9,10 @@ const.py
 .*pref*
 .door_hist_*
 html
+*/*.AppleDouble
+.AppleDouble
+.door_saved_data.db
+.idea
 
 # C extensions
 *.so

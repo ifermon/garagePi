@@ -25,6 +25,12 @@ class Event(object):
     def msg(self):
         return self._msg
 
+    def __hash__(self):
+        return hash(self._name)
+
+    def __ne__(self):
+        return not(self == other)
+
     def __str__(self):
         return self._name
 

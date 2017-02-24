@@ -11,7 +11,7 @@ from event import Event
 
 # Set up module logging
 l = logging.getLogger(__name__)
-l.setLevel(logging.DEBUG)
+l.setLevel(logging.INFO)
 
 
 # noinspection PyProtectedMember
@@ -130,10 +130,13 @@ class Door(object):
 
         # Load any saved data, this includes subscriptions and history
         if Door._data_f is None:
+            self.l.debug("Opening preferences file [{}]".format(Door._DATA_FILE))
             Door._data_f = shelve.open(const.DOOR_DATA_DIR + Door._DATA_FILE, writeback=True)
         if self.name in Door._data_f:
+            self.l.debug("Loading existing data from preferences file")
             self._saved_data_dict = Door._data_f[self.name]
         else:  # Build out initial data structures
+            self.l.debug("Building list from scratch")
             self._saved_data_dict = {
                 Door._OPEN_HIST_KEY: [],
                 Door._CLOSE_HIST_KEY: [],
@@ -142,44 +145,12 @@ class Door(object):
             for e in Door.supported_events():
                 self._saved_data_dict[Door._EVENT_SUB_KEY][e] = []
             Door._data_f[self.name] = self._saved_data_dict
+            self._sync()
         # Should be built out, now print
         self.l.debug(str(self._saved_data_dict))
         self._close_history_list = self._saved_data_dict[Door._CLOSE_HIST_KEY]
         self._open_history_list = self._saved_data_dict[Door._OPEN_HIST_KEY]
         self._event_sub_list = self._saved_data_dict[Door._EVENT_SUB_KEY]
-        Door._data_f.sync()
-
-        """
-        hist_file_name = const.door_hist_dir + "/.door_hist_" + self.name
-        self.l.debug("History file name: {}".format(hist_file_name))
-        self.history = shelve.open(hist_file_name, writeback=True)
-        if Door._OPEN_HIST_KEY not in self.history:
-            self.history[Door._OPEN_HIST_KEY] = []
-        if Door._CLOSE_HIST_KEY not in self.history:
-            self.history[Door._CLOSE_HIST_KEY] = []
-
-       # Load any previous preferences for subscriptions
-
-        pref_file_name = const.door_pref_dir + "/.door_preferences_" + self.name
-        self.l.debug("Preference file name: {}".format(pref_file_name))
-        self.preferences = shelve.open(pref_file_name, writeback=True)
-
-        if Door._EVENT_NOTIFICATION_LIST_KEY in self.preferences:
-            self.event_notification_list = self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY]
-            self.l.info("Preferences for {}'s door:".format(self.name))
-            lstr = ""
-            for e in self.event_notification_list:
-                lstr = "{}\n\t{}: {}".format(lstr, e.name, e.msg)
-            self.l.info(lstr)
-        else:
-            # If this is the first time then load empty notification lists
-            self.event_notification_list = {}
-            for e in Door.supported_events():
-                l.debug("e is now {}".format(e))
-                self.event_notification_list[e] = []
-            self.preferences[Door._EVENT_NOTIFICATION_LIST_KEY] = self.event_notification_list
-            self.preferences.sync()
-        """
 
        # Now set up the pins
        # Multiple processes are setting up pins, so supress warnings
@@ -334,6 +305,7 @@ class Door(object):
             # Record the time last opened if event is "new"
             self.door_last_opened = Door.now_str()
             self._open_history_list.insert(0, self.door_last_opened)
+            self._sync()
             # Now send msg and set a msg timer so we don't send more messages
             self._send_msg(self.OPEN_E)
 
@@ -381,6 +353,7 @@ class Door(object):
         else:
             self.msg_timer.cancel()
             self._close_history_list.insert(0, Door.now_str())
+            self._sync()
             self.msg_timer = None
         return
 
@@ -394,16 +367,26 @@ class Door(object):
         return ret_str
 
     def sub_event(self, event, phone_number):
-        if event not in self._event_sub_list:
-            self.l.debug(str(self._event_sub_list))
-            self.l.debug("Event = {}".format(event))
-            self.l.debug("does {} == {}? {}".format(event, self._event_sub_list[0], str(event == self.event_sub_list[0])))
+        self.l.debug("Got sub event = {} number = {}".format(event, phone_number))
+        self.l.debug("Before: _event_sub_list = {}".format(self._event_sub_list))
+        self.l.debug("Before: Door._data_f = {}".format(str(Door._data_f)))
         if phone_number not in self._event_sub_list[event]:
             self._event_sub_list[event].append(phone_number)
-        self.l.debug("Event notification list: {}".format(self._event_sub_list))
-        self.l.debug(str(self._saved_data_dict))
-        self.l.debug(str(Door._data_f))
+            self._sync()
+        self.l.debug("After: _event_sub_list = {}".format(self._event_sub_list))
+        self.l.debug("After: Door._data_f = {}".format(str(Door._data_f)))
+        return
+
+    def _sync(self):
+        """ Provide thread protected access to shelve file """
+        self.lock.acquire()
+        self.l.debug("Synching")
+        self.l.debug("_data_f = {}".format(Door._data_f))
+        self.l.debug("_open_history_list = {}".format(self._open_history_list))
+        self.l.debug("_close_history_list = {}".format(self._close_history_list))
+        self.l.debug("_event_sub_list = {}".format(self._event_sub_list))
         Door._data_f.sync()
+        self.lock.release()
         return
 
     def unsub_event(self, event, phone_number):
@@ -411,7 +394,7 @@ class Door(object):
         if phone_number in self._event_sub_list[event]:
             self._event_sub_list[event].remove(phone_number)
         self.l.debug("Event notification list: {}".format(self._event_sub_list))
-        Door._data_f.sync()
+        self._sync()
         return
 
     def is_sub_event(self, event, phone_number):
