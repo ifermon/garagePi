@@ -12,9 +12,8 @@ from event import Event
 # Set up module logging
 l = logging.getLogger(__name__)
 l.setLevel(logging.INFO)
+#l.setLevel(logging.DEBUG)
 
-
-# noinspection PyProtectedMember
 class Door(object):
     '''
         This module controls a garage door. It does the following:
@@ -145,8 +144,8 @@ class Door(object):
             for e in Door.supported_events():
                 self._saved_data_dict[Door._EVENT_SUB_KEY][e] = []
             Door._data_f[self.name] = self._saved_data_dict
-            self._sync()
-        # Should be built out, now print
+            self._sync(First=True)
+        # Should be built out
         self.l.debug(str(self._saved_data_dict))
         self._close_history_list = self._saved_data_dict[Door._CLOSE_HIST_KEY]
         self._open_history_list = self._saved_data_dict[Door._OPEN_HIST_KEY]
@@ -330,16 +329,16 @@ class Door(object):
         return
 
     def _send_msg(self, event):
-        ''' Sends a message via sms '''
+        ''' Sends a message via sms to all numbers set up to get messages about the event '''
         # REMOVE IF WORKING msg = self._get_event_msg(event_type)
         msg = event.msg
-        self.l.debug("Sending message '{0}'".format(msg))
         if event not in self._event_sub_list:
             self.l.debug("Event not in list")
             self.l.debug(str(self._event_sub_list))
             self.l.debug("Event = {}".format(event))
         else:
             GS.send_message(msg, self._event_sub_list[event])
+        self.l.debug("Sent message '{}' to numbers {}".format(msg, str(self._event_sub_list[event])))
         return
 
     def _door_closed(self):
@@ -355,6 +354,7 @@ class Door(object):
             self._close_history_list.insert(0, Door.now_str())
             self._sync()
             self.msg_timer = None
+            self._send_msg(self.CLOSE_E)
         return
 
     def get_open_history(self, count):
@@ -380,12 +380,21 @@ class Door(object):
     def _sync(self):
         """ Provide thread protected access to shelve file """
         self.lock.acquire()
-        self.l.debug("Synching")
-        self.l.debug("_data_f = {}".format(Door._data_f))
-        self.l.debug("_open_history_list = {}".format(self._open_history_list))
-        self.l.debug("_close_history_list = {}".format(self._close_history_list))
-        self.l.debug("_event_sub_list = {}".format(self._event_sub_list))
+        self.l.debug("Before sync")
+        self.l.debug("b _data_f = {}".format(Door._data_f))
+        self.l.debug("b _open_history_list = {}".format(self._open_history_list))
+        self.l.debug("b _close_history_list = {}".format(self._close_history_list))
+        self.l.debug("b _event_sub_list = {}".format(self._event_sub_list))
+        Door._data_f[self.name] = self._saved_data_dict 
+        self._saved_data_dict[Door._CLOSE_HIST_KEY] = self._close_history_list 
+        self._saved_data_dict[Door._OPEN_HIST_KEY] = self._open_history_list 
+        self._saved_data_dict[Door._EVENT_SUB_KEY] = self._event_sub_list 
         Door._data_f.sync()
+        self.l.debug("After sync")
+        self.l.debug("a _data_f = {}".format(Door._data_f))
+        self.l.debug("a _open_history_list = {}".format(self._open_history_list))
+        self.l.debug("a _close_history_list = {}".format(self._close_history_list))
+        self.l.debug("a _event_sub_list = {}".format(self._event_sub_list))
         self.lock.release()
         return
 

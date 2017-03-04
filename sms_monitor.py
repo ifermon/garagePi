@@ -22,13 +22,14 @@ LOG_DIR="/home/garage/garagePi/logs/"
 """
 class SMS_Monitor(MP.Process):
 
-    def __init__(self, queue, debug=True):
+    def __init__(self, queue, debug=False):
+
+        self.l = logging.getLogger(__name__)
+        self.l.info("Configuring SMS logger")
+
         super(SMS_Monitor, self).__init__(name="SMS_Monitor")
         self.queue = queue
         self.debug = debug
-
-        self.l = logging.getLogger(__name__)
-        self.l.info("Just configured logger")
 
         return
 
@@ -61,6 +62,7 @@ class SMS_Monitor(MP.Process):
                 os.getpid()))
 
         app = Flask(__name__)
+        l.debug("Just created a Flask")
 
         """
             This gets called when I receive a message (i.e. someone posts to my
@@ -152,7 +154,7 @@ class SMS_Monitor(MP.Process):
 
         # Very bad style hard-coding this. Some day I'll fix it
         uuid_store = shelve.open("{0}{1}".format(LOG_DIR, "uuid_store"))
-        app.run(host='0.0.0.0', debug=self.debug, ssl_context='adhoc')
+        app.run(host='0.0.0.0', debug=False, ssl_context='adhoc')
         return
 
 

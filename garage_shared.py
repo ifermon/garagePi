@@ -41,7 +41,7 @@ def is_dark():
     
 # Utility function to send out an SMS message
 def send_message(msg, number_list=['16509968841']):
-    logging.debug("In send message, sending: ".format(msg))
+    logging.debug("In send message, sending: {} to the following numbers {}".format(msg, number_list))
     # Your Account Sid and Auth Token from plivo.com/user/account
     account_id = const.auth_id
     auth_token  = const.auth_token
@@ -54,6 +54,7 @@ def send_message(msg, number_list=['16509968841']):
                 'text': msg, 
                 'type': 'sms', }
         response = client.send_message(params)
+        logging.debug(str(response))
     return
 
 
@@ -61,14 +62,15 @@ def send_message(msg, number_list=['16509968841']):
 def configure_logging():
     l = logging.getLogger()
     l.setLevel(logging.INFO)
+    l.setLevel(logging.DEBUG)
     fh = logging.FileHandler("{0}{1}.log".format(LOG_DIR, "GaragePi"))
     fh.setLevel(logging.INFO)
     sh = logging.StreamHandler()
     sh.setLevel(logging.DEBUG)
     # Don't need timestand on stream formatter
-    shformatter = logging.Formatter(fmt="%(levelname)-8s%(name)-8s %(message)s [%(filename)s@%(lineno)s]")
+    shformatter = logging.Formatter(fmt="%(levelname)-8s%(name)-8s %(message)s [%(filename)s@%(lineno)s][%(process)d]SH")
     fhformatter = logging.Formatter(datefmt="%a %y%m%d%z %H%M%S",
-            fmt="%(asctime)-22s %(levelname)-8s%(name)-8s %(message)s [%(filename)s@%(lineno)s]")
+            fmt="%(asctime)-22s %(levelname)-8s%(name)-8s %(message)s [%(filename)s@%(lineno)s]FH")
     fh.setFormatter(fhformatter)
     sh.setFormatter(shformatter)
     l.addHandler(fh)

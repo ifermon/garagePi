@@ -5,7 +5,7 @@
 	These are class level references, not instance level
 	All objects referenced here must be thread / multi process safe
 '''
-from multiprocessing import RLock, Queue
+from multiprocessing import RLock, Queue, Lock
 from Queue import Empty
 import garage_shared as GS
 from door import Door
@@ -16,6 +16,7 @@ import sys
 import const
 import logging
 import sdnotify
+
 """
     TO DO: Respond to texts to the number that it came from for help and status
 """
@@ -168,40 +169,42 @@ def ret_status(from_number, cmds):
 
 if __name__ == "__main__":
 
+
     # get things set up
     keep_alive = True
-    GS.configure_logging()
-    l = logging.getLogger(__name__)
+    l = GS.configure_logging()
     l.info("Just configured logger")
     GS.lock = RLock()
     q = Queue()
 
-    # Setup the indivdiual garage doors
-    """
-    if not config.haskey("doors"):
-        l.error("No garage doors configured in config.yaml")
-        sys.exit(1)
-    #for d in config["doors"]:
-    """
-
+    l.debug("Creating Ivan's door")
+    time.sleep(5)
     ivan_door = Door(23,18,"Ivan",GS.lock)
+    l.debug("Creating Heather's door")
+    time.sleep(5)
     heather_door = Door(17, 22, "Heather",GS.lock)
+    time.sleep(5)
 
     # Start the flask server so we can receive SMS messages
     l.debug("Starting sms_listener")
-    sms_listener = SMS.SMS_Monitor(q, debug=False)
+    sms_listener = SMS.SMS_Monitor(q, debug=True)
+    l.debug("Created sms_listener")
+    time.sleep(5)
     sms_listener.daemon = True
     sms_listener.start()
     time.sleep(5)
     l.debug("Started sms_listener")
 
     # Start the light monitor
-    l.debug("Starting light_monitor")
+    l.info("Starting light_monitor")
     light_monitor = LM.Light_Monitor(q)
+    l.info("LM created, sleeping for 5 secs")
     light_monitor.daemon = True
-    light_monitor.start()
     time.sleep(5)
-    l.debug("Started light_monitor")
+    light_monitor.start()
+    l.info("LM started")
+    time.sleep(5)
+    l.info("Started light_monitor")
     
 
     # This is our function map. Based on the type of message (which is just
@@ -259,3 +262,4 @@ if __name__ == "__main__":
                     GS.send_message("I don't know that command. Sorry.")
                     l.info("Unknown msg <{0}>".format(msg))
     
+
