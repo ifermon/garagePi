@@ -13,6 +13,7 @@ Wants=network-online.target
 
 [Service]
 Type=notify
+Environment=PYTHONDONTWRITEBYTECODE=1
 ExecStart=/home/garage/garagePi/garage.py
 #ExecStart=/home/garage/garagePi/go
 WatchdogSec=120

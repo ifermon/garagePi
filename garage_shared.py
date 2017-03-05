@@ -40,7 +40,7 @@ def is_dark():
     return (sunrise() < sunset())
     
 # Utility function to send out an SMS message
-def send_message(msg, number_list=['16509968841']):
+def send_message(msg, number_list=[const.Ivan_cell,]):
     logging.debug("In send message, sending: {} to the following numbers {}".format(msg, number_list))
     # Your Account Sid and Auth Token from plivo.com/user/account
     account_id = const.auth_id

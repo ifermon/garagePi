@@ -130,7 +130,7 @@ class SMS_Monitor(MP.Process):
         @app.route("/zane", methods=['GET'])
         def zane_open_door():
             self.l.info("Zane is requesting open door")
-            self.queue.put({'Text':'h', 'From':'16509968841'})
+            #self.queue.put({'Text':'h', 'From':const.Ivan_cell})
             GS.send_message('Zane triggered door.')
             self.l.info("Put msg in queue to open Heather's door from Zane.")
             return "Received"
