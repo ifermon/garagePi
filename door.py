@@ -34,7 +34,7 @@ class Door(object):
     _CLOSE_HIST_KEY = "Close history"
     _EVENT_SUB_KEY = "Event subscriptions"
     _default_hist_count = 5
-    _power_pin = 24
+    _power_pin = 7
     _initial_wait_time = 300  # Time in secs before first nag msg is sent when door is left opened
     _repeat_wait_time = 1800  # Time in secs before repeat nag msg is sent
     _transition_wait_time = 30  # Time in secs to wait for door operation to complete (open/close)
@@ -164,7 +164,7 @@ class Door(object):
         GPIO.output(Door._power_pin, True)
 
        # Settings for relay switch (door switch)
-        GPIO.setup(self.push_button_pin, GPIO.OUT, initial=GPIO.HIGH)
+        GPIO.setup(self.push_button_pin, GPIO.OUT, initial=GPIO.LOW)
 
        # Set a callback function, when it detects a change
        # this function will be called
@@ -233,9 +233,9 @@ class Door(object):
         self.lock.acquire()
         begin_state = self.get_status()
         self.l.info("Pushing button {0}'s door".format(self.name))
-        GPIO.output(self.push_button_pin, GPIO.LOW)
-        time.sleep(1)
         GPIO.output(self.push_button_pin, GPIO.HIGH)
+        time.sleep(1)
+        GPIO.output(self.push_button_pin, GPIO.LOW)
         self.lock.release()
 
         time.sleep(Door._transition_wait_time)
@@ -369,32 +369,32 @@ class Door(object):
     def sub_event(self, event, phone_number):
         self.l.debug("Got sub event = {} number = {}".format(event, phone_number))
         self.l.debug("Before: _event_sub_list = {}".format(self._event_sub_list))
-        self.l.debug("Before: Door._data_f = {}".format(str(Door._data_f)))
+        #self.l.debug("Before: Door._data_f = {}".format(str(Door._data_f)))
         if phone_number not in self._event_sub_list[event]:
             self._event_sub_list[event].append(phone_number)
             self._sync()
         self.l.debug("After: _event_sub_list = {}".format(self._event_sub_list))
-        self.l.debug("After: Door._data_f = {}".format(str(Door._data_f)))
+        #self.l.debug("After: Door._data_f = {}".format(str(Door._data_f)))
         return
 
     def _sync(self):
         """ Provide thread protected access to shelve file """
         self.lock.acquire()
         self.l.debug("Before sync")
-        self.l.debug("b _data_f = {}".format(Door._data_f))
-        self.l.debug("b _open_history_list = {}".format(self._open_history_list))
-        self.l.debug("b _close_history_list = {}".format(self._close_history_list))
-        self.l.debug("b _event_sub_list = {}".format(self._event_sub_list))
+        #self.l.debug("b _data_f = {}".format(Door._data_f))
+        #self.l.debug("b _open_history_list = {}".format(self._open_history_list))
+        #self.l.debug("b _close_history_list = {}".format(self._close_history_list))
+        #self.l.debug("b _event_sub_list = {}".format(self._event_sub_list))
         Door._data_f[self.name] = self._saved_data_dict 
         self._saved_data_dict[Door._CLOSE_HIST_KEY] = self._close_history_list 
         self._saved_data_dict[Door._OPEN_HIST_KEY] = self._open_history_list 
         self._saved_data_dict[Door._EVENT_SUB_KEY] = self._event_sub_list 
         Door._data_f.sync()
         self.l.debug("After sync")
-        self.l.debug("a _data_f = {}".format(Door._data_f))
-        self.l.debug("a _open_history_list = {}".format(self._open_history_list))
-        self.l.debug("a _close_history_list = {}".format(self._close_history_list))
-        self.l.debug("a _event_sub_list = {}".format(self._event_sub_list))
+        #self.l.debug("a _data_f = {}".format(Door._data_f))
+        #self.l.debug("a _open_history_list = {}".format(self._open_history_list))
+        #self.l.debug("a _close_history_list = {}".format(self._close_history_list))
+        #self.l.debug("a _event_sub_list = {}".format(self._event_sub_list))
         self.lock.release()
         return
 

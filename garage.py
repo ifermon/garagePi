@@ -179,10 +179,10 @@ if __name__ == "__main__":
 
     l.debug("Creating Ivan's door")
     time.sleep(5)
-    ivan_door = Door(23,18,"Ivan",GS.lock)
+    ivan_door = Door(8, 9, "Ivan", GS.lock)
     l.debug("Creating Heather's door")
     time.sleep(5)
-    heather_door = Door(17, 22, "Heather",GS.lock)
+    heather_door = Door(11, 25, "Heather", GS.lock)
     time.sleep(5)
 
     # Start the flask server so we can receive SMS messages
