@@ -38,7 +38,7 @@ class Light_Monitor(thread.Thread):
         self.bus = smbus.SMBus(1)
         self.light_left_on_timer = None
         self.l = logging.getLogger(__name__)
-        self.l.setLevel(logging.DEBUG)
+        #self.l.setLevel(logging.DEBUG)
 
         # Get preferences
         pref_file_name = const.light_pref_file

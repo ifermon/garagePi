@@ -62,11 +62,11 @@ def send_message(msg, number_list=[const.Ivan_cell,]):
 def configure_logging():
     l = logging.getLogger()
     l.setLevel(logging.INFO)
-    l.setLevel(logging.DEBUG)
+    #l.setLevel(logging.DEBUG)
     fh = logging.FileHandler("{0}{1}.log".format(LOG_DIR, "GaragePi"))
     fh.setLevel(logging.INFO)
     sh = logging.StreamHandler()
-    sh.setLevel(logging.DEBUG)
+    #sh.setLevel(logging.DEBUG)
     # Don't need timestand on stream formatter
     shformatter = logging.Formatter(fmt="%(levelname)-8s%(name)-8s %(message)s [%(filename)s@%(lineno)s][%(process)d]SH")
     fhformatter = logging.Formatter(datefmt="%a %y%m%d%z %H%M%S",

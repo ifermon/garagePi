@@ -34,10 +34,11 @@ class Door(object):
     _CLOSE_HIST_KEY = "Close history"
     _EVENT_SUB_KEY = "Event subscriptions"
     _default_hist_count = 5
-    _power_pin = 7
+    _BTN_PRESS_TIME = 1
+    _power_pin = 20
     _initial_wait_time = 300  # Time in secs before first nag msg is sent when door is left opened
     _repeat_wait_time = 1800  # Time in secs before repeat nag msg is sent
-    _transition_wait_time = 30  # Time in secs to wait for door operation to complete (open/close)
+    _transition_wait_time = 16  # Time in secs to wait for door operation to complete (open/close)
     _DATA_FILE = '.door_saved_data.db'
     _data_f = None  # The file that stores persistent data, not thread safe, use one per class
 
@@ -108,13 +109,14 @@ class Door(object):
 
         # Setup logging just for this door
         self.l = logging.getLogger(door_name)
-        self.l.setLevel(logging.DEBUG)
+        #self.l.setLevel(logging.DEBUG)
 
         # Set up basic instance vars
         self.name = door_name
         self.open_close_state_pin = open_close_state_pin
         self.push_button_pin = push_button_pin
         self.msg_timer = None
+        self._check_door_timer = None
         self.door_last_opened = None
         self._id = str(type(self)) + self.name
 
@@ -146,32 +148,32 @@ class Door(object):
             Door._data_f[self.name] = self._saved_data_dict
             self._sync(First=True)
         # Should be built out
-        self.l.debug(str(self._saved_data_dict))
+        #self.l.debug(str(self._saved_data_dict))
         self._close_history_list = self._saved_data_dict[Door._CLOSE_HIST_KEY]
         self._open_history_list = self._saved_data_dict[Door._OPEN_HIST_KEY]
         self._event_sub_list = self._saved_data_dict[Door._EVENT_SUB_KEY]
 
-       # Now set up the pins
-       # Multiple processes are setting up pins, so supress warnings
+        # Now set up the pins
+        # Multiple processes are setting up pins, so supress warnings
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
 
-       # Settings for reed switch
-       # GPIO.setup(self.open_close_state_pin, GPIO.IN, initial=GPIO.LOW,
+        # Settings for reed switch
+        # GPIO.setup(self.open_close_state_pin, GPIO.IN, initial=GPIO.LOW,
         GPIO.setup(self.open_close_state_pin, GPIO.IN,
                 pull_up_down=GPIO.PUD_DOWN)
         GPIO.setup(Door._power_pin, GPIO.OUT, initial=GPIO.LOW)
         GPIO.output(Door._power_pin, True)
 
-       # Settings for relay switch (door switch)
+        # Settings for relay switch (door switch)
         GPIO.setup(self.push_button_pin, GPIO.OUT, initial=GPIO.LOW)
 
-       # Set a callback function, when it detects a change
-       # this function will be called
+        # Set a callback function, when it detects a change
+        # this function will be called
         GPIO.add_event_detect(self.open_close_state_pin, GPIO.RISING,
                 callback = self._door_moving_callback, bouncetime=2000)
 
-       # Now get and set the current state of the door
+        # Now get and set the current state of the door
         self.last_state = self.get_status()
         if self.last_state == Door._OPENED:
             self.l.info("Door already opened at startup")
@@ -228,17 +230,8 @@ class Door(object):
                         [from_number,])
         return
 
-    def press_button(self, from_number, cmds):
-        ''' Press the door open/close switch '''
-        self.lock.acquire()
-        begin_state = self.get_status()
-        self.l.info("Pushing button {0}'s door".format(self.name))
-        GPIO.output(self.push_button_pin, GPIO.HIGH)
-        time.sleep(1)
-        GPIO.output(self.push_button_pin, GPIO.LOW)
-        self.lock.release()
-
-        time.sleep(Door._transition_wait_time)
+    def _check_door(self, begin_state):
+        """ After button is pressed, check to see if door opened / closed successfully """
         if begin_state == Door._CLOSED:
             if self.get_status() == Door._CLOSED:
                 """ Failed at opening door, send message """
@@ -256,6 +249,24 @@ class Door(object):
                 self._send_msg(self.BUTTON_CLOSE_E)
         else:
             self.l.error("Unknown error pushing button - door in unknown state")
+        self._check_door_timer = None
+        return
+
+    def press_button(self, from_number, cmds):
+        ''' Press the door open/close switch '''
+        self.lock.acquire()
+        if self._check_door_timer:
+            self._check_door_timer.cancel()
+            self._check_door_timer = None
+        begin_state = self.get_status()
+        self.l.info("Pushing button {0}'s door".format(self.name))
+        GPIO.output(self.push_button_pin, GPIO.HIGH)
+        time.sleep(self._BTN_PRESS_TIME)
+        GPIO.output(self.push_button_pin, GPIO.LOW)
+        self.lock.release()
+
+        self._check_door_timer = Timer(Door._transition_wait_time, self._check_door, [begin_state])
+        self._check_door_timer.start()
         return
 
     def _door_moving_callback(self, channel):
@@ -296,7 +307,7 @@ class Door(object):
         '''
         self.l.info("Got door opened event")
 
-        if self.msg_timer is not None:
+        if self.msg_timer:
             # This should never happen. We should have removed timer when closed
             self.l.error("Door opened and we already have msg_timer - error of some kind")
             self.msg_timer.cancel()
@@ -330,7 +341,6 @@ class Door(object):
 
     def _send_msg(self, event):
         ''' Sends a message via sms to all numbers set up to get messages about the event '''
-        # REMOVE IF WORKING msg = self._get_event_msg(event_type)
         msg = event.msg
         if event not in self._event_sub_list:
             self.l.debug("Event not in list")
