@@ -148,7 +148,7 @@ class Door(object):
             for e in Door.supported_events():
                 self._saved_data_dict[Door._EVENT_SUB_KEY][e] = []
             Door._data_f[self.name] = self._saved_data_dict
-            self._sync(First=True)
+            self._sync(first=True)
         # Should be built out
         #self.l.debug(str(self._saved_data_dict))
         self._close_history_list = self._saved_data_dict[Door._CLOSE_HIST_KEY]
@@ -240,18 +240,18 @@ class Door(object):
         if begin_state == Door._CLOSED:
             if self.get_status() == Door._CLOSED:
                 """ Failed at opening door, send message """
-                self._send_msg(self.DOOR_OPENING_ERROR_E)
+                self._publish_event(self.DOOR_OPENING_ERROR_E)
             else:
                 self.l.info("{}'s door was closed, we opened it".format(self.name))
-                self._send_msg(self.BUTTON_OPEN_E)
+                self._publish_event(self.BUTTON_OPEN_E)
         elif begin_state == Door._OPENED:
             """ Let's confirm that the door was closed"""
             if self.get_status() != Door._CLOSED:
                 self.l.error("{}'s door did not close as expected".format(self.name))
-                self._send_msg(self.DOOR_CLOSING_ERROR_E)
+                self._publish_event(self.DOOR_CLOSING_ERROR_E)
             else:  # Door closed as expected
                 self.l.debug("{}'s door closed after pressing button".format(self.name))
-                self._send_msg(self.BUTTON_CLOSE_E)
+                self._publish_event(self.BUTTON_CLOSE_E)
         else:
             self.l.error("Unknown error pushing button - door in unknown state")
         self._check_door_timer = None
@@ -319,10 +319,13 @@ class Door(object):
         else:
             # Record the time last opened if event is "new"
             self.door_last_opened = Door.now_str()
+            l.info("Size of open hist list before: {}".format(len(self._open_history_list)))
             self._open_history_list.insert(0, self.door_last_opened)
+            l.info("Size of open hist list after insert, before sync: {}".format(len(self._open_history_list)))
             self._sync()
+            l.info("Size of open hist list after sync: {}".format(len(self._open_history_list)))
             # Now send msg and set a msg timer so we don't send more messages
-            self._send_msg(self.OPEN_E)
+            self._publish_event(self.OPEN_E)
 
         # Set a timer so we don't bother with repeated messages
         self.msg_timer = Timer(Door._initial_wait_time, self._quiet_time_over)
@@ -338,13 +341,13 @@ class Door(object):
         # Check to see if door is still opened, if so, set timer to check
         # again in 30 mins
         if self.get_status() == Door._OPENED:
-            self._send_msg(self.TIMER_E)
+            self._publish_event(self.TIMER_E)
             self.msg_timer = Timer(Door._repeat_wait_time, self._quiet_time_over)
             self.msg_timer.start()
         self.l.debug("Leaving quiet timer")
         return
 
-    def _send_msg(self, event):
+    def _publish_event(self, event):
         """ Sends a message via sms to all numbers set up to get messages about the event """
         msg = event.msg
         if event not in self._event_sub_list:
@@ -369,7 +372,7 @@ class Door(object):
             self._close_history_list.insert(0, Door.now_str())
             self._sync()
             self.msg_timer = None
-            self._send_msg(self.CLOSE_E)
+            self._publish_event(self.CLOSE_E)
         return
 
     def _custom_ts_sort(self, ts):
@@ -407,7 +410,7 @@ class Door(object):
         #self.l.debug("After: Door._data_f = {}".format(str(Door._data_f)))
         return
 
-    def _sync(self):
+    def _sync(self, first=False):
         """ Provide thread protected access to shelve file """
         self.lock.acquire()
         self.l.debug("Before sync")
