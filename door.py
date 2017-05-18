@@ -319,11 +319,8 @@ class Door(object):
         else:
             # Record the time last opened if event is "new"
             self.door_last_opened = Door.now_str()
-            l.info("Size of open hist list before: {}".format(len(self._open_history_list)))
             self._open_history_list.insert(0, self.door_last_opened)
-            l.info("Size of open hist list after insert, before sync: {}".format(len(self._open_history_list)))
             self._sync()
-            l.info("Size of open hist list after sync: {}".format(len(self._open_history_list)))
             # Now send msg and set a msg timer so we don't send more messages
             self._publish_event(self.OPEN_E)
 
@@ -393,7 +390,7 @@ class Door(object):
         for i in self._close_history_list[:count]:
             ordered_hist_list.append(i + " {:7s}".format("(Close)"))
 
-        ordered_hist_list.sort(key=self._custom_ts_sort)
+        ordered_hist_list.sort(reverse=True,key=self._custom_ts_sort)
         count = min(count, len(ordered_hist_list))
         str_list = ["{}'s door history:".format(self.name),] + ordered_hist_list[:count]
         ret_str = "\n  ".join(str_list)
@@ -414,20 +411,12 @@ class Door(object):
         """ Provide thread protected access to shelve file """
         self.lock.acquire()
         self.l.debug("Before sync")
-        #self.l.debug("b _data_f = {}".format(Door._data_f))
-        #self.l.debug("b _open_history_list = {}".format(self._open_history_list))
-        #self.l.debug("b _close_history_list = {}".format(self._close_history_list))
-        #self.l.debug("b _event_sub_list = {}".format(self._event_sub_list))
         Door._data_f[self.name] = self._saved_data_dict 
         self._saved_data_dict[Door._CLOSE_HIST_KEY] = self._close_history_list 
         self._saved_data_dict[Door._OPEN_HIST_KEY] = self._open_history_list 
         self._saved_data_dict[Door._EVENT_SUB_KEY] = self._event_sub_list 
         Door._data_f.sync()
         self.l.debug("After sync")
-        #self.l.debug("a _data_f = {}".format(Door._data_f))
-        #self.l.debug("a _open_history_list = {}".format(self._open_history_list))
-        #self.l.debug("a _close_history_list = {}".format(self._close_history_list))
-        #self.l.debug("a _event_sub_list = {}".format(self._event_sub_list))
         self.lock.release()
         return
 
