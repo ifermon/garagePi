@@ -85,7 +85,7 @@ def get_history(from_number, cmds):
         count = cmds[2]
     else:
         count = None
-    ret_str = door.get_open_history(count)
+    ret_str = door.get_history(count)
     l.info("In get_history: return msg is: {}".format(ret_str))
     GS.send_message(ret_str)
     return

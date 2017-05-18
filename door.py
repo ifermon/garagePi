@@ -15,7 +15,7 @@ l.setLevel(logging.INFO)
 #l.setLevel(logging.DEBUG)
 
 class Door(object):
-    '''
+    """
         This module controls a garage door. It does the following:
             open - open the door
             close - close the door
@@ -25,9 +25,9 @@ class Door(object):
             _OPENED is the status for garage door opened. Technically it means
             that the signal pin cooresponding to the reed switch for the door
             is an open circut, _CLOSED is the opposite.
-    '''
+    """
 
-    # Define class constants
+    # Define class constants and variables
     _OPENED = 0  # Value of pin state when door is opened (circut open)
     _CLOSED = 1  # Value of pin state when door is closed (circut closed)
     _OPEN_HIST_KEY = "Open history"
@@ -36,11 +36,13 @@ class Door(object):
     _default_hist_count = 5
     _BTN_PRESS_TIME = 1
     _power_pin = 20
-    _initial_wait_time = 300  # Time in secs before first nag msg is sent when door is left opened
+    _initial_wait_time = 900  # Time in secs before first nag msg is sent when door is left opened
     _repeat_wait_time = 1800  # Time in secs before repeat nag msg is sent
     _transition_wait_time = 16  # Time in secs to wait for door operation to complete (open/close)
     _DATA_FILE = '.door_saved_data.db'
     _data_f = None  # The file that stores persistent data, not thread safe, use one per class
+    _TIMESTAMP_FORMAT_STR = "%a %b %d %Y @ %I:%M:%S %p"
+
 
     # Events support by class
     CLOSE_E = Event("Close Event")
@@ -53,24 +55,24 @@ class Door(object):
 
     @classmethod
     def supported_events(cls):
-        '''
+        """
             Utility method to return a list of all valid events for class Door
-        '''
+        """
         return [Door.CLOSE_E, Door.OPEN_E, Door.TIMER_E, Door.DOOR_CLOSING_ERROR_E,
                 Door.DOOR_OPENING_ERROR_E, Door.BUTTON_CLOSE_E, Door.BUTTON_OPEN_E]
 
     @staticmethod
     def now_str():
-        ''' Return string representation of right now'''
-        return time.strftime("%a %b %d %Y @ %I:%M:%S %p")
+        """ Return string representation of right now"""
+        return time.strftime(Door._TIMESTAMP_FORMAT_STR)
 
     def get_state_str(self, state=None):
-        '''
+        """
             Utility method to get string versions of state
             Default to value of current_state
             :param state:
             :return: Returns string value of state (Opened or Closed).
-        '''
+        """
         if state is None:
             state = self.current_state
         if state == Door._OPENED:
@@ -89,12 +91,12 @@ class Door(object):
 
     @property
     def id(self):
-        ''' persistent id for pickling event notifications'''
+        """ persistent id for pickling event notifications"""
         return self._id
 
     def __init__(self, open_close_state_pin, push_button_pin, door_name,
             resource_lock):
-        '''
+        """
             Initialize the door - set pins, set up logging, etc
             All pin numbering is in BCM mode
             open_close_state_pin: the pin on the PI that indicates if the door
@@ -103,7 +105,7 @@ class Door(object):
             door_name: The name of this door. Used or messaging
             resource_lock: a shared RLock that prevents contention from
               multiple doors
-        '''
+        """
         self.lock = resource_lock
         self.lock.acquire()
 
@@ -191,17 +193,17 @@ class Door(object):
                 "\tCurrent state {0}\n".format(self.get_state_str()))
 
         self.lock.release()
-        return
+        return  # END __init__
 
     def get_status(self):
-        ''' Get and set the current state of the door (open/close) '''
+        """ Get and set the current state of the door (open/close) """
         self.lock.acquire()
         self.current_state = GPIO.input(self.open_close_state_pin)
         self.lock.release()
         return self.current_state
 
     def snooze_timer(self, from_number, cmds):
-        ''' Either cancel or snooze the timer'''
+        """ Either cancel or snooze the timer"""
         self.l.debug("In snooze with these commands: {}".format(cmds))
         snooze_time = None
 
@@ -231,7 +233,10 @@ class Door(object):
         return
 
     def _check_door(self, begin_state):
-        """ After button is pressed, check to see if door opened / closed successfully """
+        """ 
+            After button is pressed, check to see if door opened / closed successfully 
+            This is set on a timer after press_button is called
+        """
         if begin_state == Door._CLOSED:
             if self.get_status() == Door._CLOSED:
                 """ Failed at opening door, send message """
@@ -253,7 +258,7 @@ class Door(object):
         return
 
     def press_button(self, from_number, cmds):
-        ''' Press the door open/close switch '''
+        """ Press the door open/close switch """
         self.lock.acquire()
         if self._check_door_timer:
             self._check_door_timer.cancel()
@@ -270,12 +275,12 @@ class Door(object):
         return
 
     def _door_moving_callback(self, channel):
-        '''
+        """
             This function is called when the reed switch senses a change
             (i.e. door closes or opens). It's possible that it gets false
             alarms, so do a second check after waiting for the door to finish
             moving.
-        '''
+        """
         self.lock.acquire()
         self.l.debug("Got a callback")
         # 20 secs should be enough time for the door to complete either
@@ -301,10 +306,10 @@ class Door(object):
         return
 
     def _door_opened(self):
-        '''
+        """
             This function is called when the garage door is detected to have
             opened. Sends a text message and logs event
-        '''
+        """
         self.l.info("Got door opened event")
 
         if self.msg_timer:
@@ -325,7 +330,7 @@ class Door(object):
         return
 
     def _quiet_time_over(self):
-        ''' Clears the quiet time timer, checks to see if door is still opened, and sets another timer if it is '''
+        """ Clears the quiet time timer, checks to see if door is still opened, and sets another timer if it is """
         # Clear the msg timer
         self.l.debug("Quiet time is over - send a message if door still open")
         self.msg_timer = None
@@ -340,7 +345,7 @@ class Door(object):
         return
 
     def _send_msg(self, event):
-        ''' Sends a message via sms to all numbers set up to get messages about the event '''
+        """ Sends a message via sms to all numbers set up to get messages about the event """
         msg = event.msg
         if event not in self._event_sub_list:
             self.l.debug("Event not in list")
@@ -352,10 +357,10 @@ class Door(object):
         return
 
     def _door_closed(self):
-        '''
+        """
             This function is called when the garage door is detected to have
             closed.
-        '''
+        """
         self.l.info("Door closed")
         if self.msg_timer is None:
             self.l.error("Door closed and no open msg_timer - should not happen")
@@ -367,14 +372,29 @@ class Door(object):
             self._send_msg(self.CLOSE_E)
         return
 
-    def get_open_history(self, count):
+    def _custom_ts_sort(self, ts):
+        """ Sort based on the timestamp we are sending """
+        t = time.strptime(ts[:-8], Door._TIMESTAMP_FORMAT_STR)
+        return time.strftime("%Y%m%d%H%M%S", t)
+
+    def get_history(self, count):
         """ Return a string of the last n times door opened """
         if count is None:  # calling arg will always send count
             count = Door._default_hist_count
-        count = min(count, len(self._open_history_list))
-        str_list = ["{}'s door open history:".format(self.name),] + self._open_history_list[:count]
+        else:
+            count = int(count)
+        ordered_hist_list = []
+        #  Note - (Open) and (Close) strings should be same length to make sorting work
+        for i in self._open_history_list[:count]:
+            ordered_hist_list.append(i + " {:7s}".format("(Open)"))
+        for i in self._close_history_list[:count]:
+            ordered_hist_list.append(i + " {:7s}".format("(Close)"))
+
+        ordered_hist_list.sort(key=self._custom_ts_sort)
+        count = min(count, len(ordered_hist_list))
+        str_list = ["{}'s door history:".format(self.name),] + ordered_hist_list[:count]
         ret_str = "\n  ".join(str_list)
-        return ret_str
+        return ret_str.replace("@","at")
 
     def sub_event(self, event, phone_number):
         self.l.debug("Got sub event = {} number = {}".format(event, phone_number))
