@@ -168,7 +168,7 @@ class Door(object):
         GPIO.output(Door._power_pin, True)
 
         # Settings for relay switch (door switch)
-        GPIO.setup(self.push_button_pin, GPIO.OUT, initial=GPIO.LOW)
+        GPIO.setup(self.push_button_pin, GPIO.OUT, initial=GPIO.HIGH)
 
         # Set a callback function, when it detects a change
         # this function will be called
@@ -265,9 +265,9 @@ class Door(object):
             self._check_door_timer = None
         begin_state = self.get_status()
         self.l.info("Pushing button {0}'s door".format(self.name))
-        GPIO.output(self.push_button_pin, GPIO.HIGH)
-        time.sleep(self._BTN_PRESS_TIME)
         GPIO.output(self.push_button_pin, GPIO.LOW)
+        time.sleep(self._BTN_PRESS_TIME)
+        GPIO.output(self.push_button_pin, GPIO.HIGH)
         self.lock.release()
 
         self._check_door_timer = Timer(Door._transition_wait_time, self._check_door, [begin_state])
