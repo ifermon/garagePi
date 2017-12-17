@@ -36,7 +36,7 @@ class Door(object):
     _default_hist_count = 5
     _BTN_PRESS_TIME = 1
     _power_pin = 20
-    _initial_wait_time = 900  # Time in secs before first nag msg is sent when door is left opened
+    _initial_wait_time = 1800  # Time in secs before first nag msg is sent when door is left opened
     _repeat_wait_time = 1800  # Time in secs before repeat nag msg is sent
     _transition_wait_time = 16  # Time in secs to wait for door operation to complete (open/close)
     _DATA_FILE = '.door_saved_data.db'
@@ -124,12 +124,14 @@ class Door(object):
 
         # Create the events with customized messages
         self.CLOSE_E = Door.CLOSE_E.localize("{}'s door was closed.".format(self.name))
-        self.OPEN_E = Door.OPEN_E.localize("{}'s door was opened.".format(self.name))
+        #self.OPEN_E = Door.OPEN_E.localize("{}'s door was opened.".format(self.name))
+        self.OPEN_E = Door.OPEN_E.localize("{}'s door is still opened. Click https://67.246.62.98:9090/web/".format(self.name))
         self.TIMER_E = Door.TIMER_E.localize("{}'s door is still opened.".format(self.name))
         self.DOOR_CLOSING_ERROR_E = Door.DOOR_CLOSING_ERROR_E.localize("Error closing {}'s door.".format(self.name))
         self.DOOR_OPENING_ERROR_E = Door.DOOR_OPENING_ERROR_E.localize("Error opening {}'s door.".format(self.name))
         self.BUTTON_CLOSE_E = Door.BUTTON_CLOSE_E.localize("Confirming {}'s door closed.".format(self.name))
         self.BUTTON_OPEN_E = Door.BUTTON_OPEN_E.localize("Confirming {}'s door opened.".format(self.name))
+        self.BUTTON_OPEN_E = Door.BUTTON_OPEN_E.localize("Confirming {}'s door opened. Click https://67.246.62.98:9090/web/".format(self.name))
 
         # Load any saved data, this includes subscriptions and history
         if Door._data_f is None:
@@ -362,7 +364,7 @@ class Door(object):
             closed.
         """
         self.l.info("Door closed")
-        if self.msg_timer is None:
+        if not self.msg_timer:
             self.l.error("Door closed and no open msg_timer - should not happen")
         else:
             self.msg_timer.cancel()

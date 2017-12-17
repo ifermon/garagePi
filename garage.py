@@ -25,6 +25,7 @@ def list_current_subscriptions(from_number, cmds):
     msg_str = "You'll be notified of the following events:\n"
     for d in ivan_door, heather_door:
         e_str = "{}'s door:\n".format(d.name)
+        #e_str = "{}'s door:\n".format(d.name)
         e_check = len(e_str) # We'll check for changes later
         if d.is_sub_event(Door.OPEN_E, from_number):
             e_str += " - When door opens\n"
@@ -179,10 +180,10 @@ if __name__ == "__main__":
 
     l.debug("Creating Ivan's door")
     time.sleep(5)
-    ivan_door = Door(16, 9, "Ivan", GS.lock)
+    heather_door = Door(16, 9, "Heather", GS.lock)
     l.debug("Creating Heather's door")
     time.sleep(5)
-    heather_door = Door(26, 25, "Heather", GS.lock)
+    ivan_door = Door(26, 25, "Ivan", GS.lock)
     time.sleep(5)
 
     # Start the flask server so we can receive SMS messages
