@@ -13,7 +13,7 @@ _addr_default = 0x23
 _trigger_value = 5
 POLL_TIME = 5
 # Default timer time (in seconds = 7 minutes)
-TIMER_INTERVAL = 420
+TIMER_INTERVAL = 900.0
 
 ON = 1
 OFF = 2

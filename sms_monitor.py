@@ -73,7 +73,8 @@ class SMS_Monitor(MP.Process):
             try:
                 # This is the uri used by plivo. The port translation is from 
                 # the gateway. The ddns is by ddns.net
-                uri = "https://ifermon.ddns.net:6000/"
+                #uri = "https://ifermon.ddns.net:6000/"
+                uri = "https://67.246.62.98:6000/"
                 self.l.info("Got message on {0}\nmsg: \"{1}\"".format(uri, 
                         request.values))
 

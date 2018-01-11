@@ -36,8 +36,8 @@ class Door(object):
     _default_hist_count = 5
     _BTN_PRESS_TIME = 1
     _power_pin = 20
-    _initial_wait_time = 1800  # Time in secs before first nag msg is sent when door is left opened
-    _repeat_wait_time = 1800  # Time in secs before repeat nag msg is sent
+    _initial_wait_time = 2800.0  # Time in secs before first nag msg is sent when door is left opened
+    _repeat_wait_time = 2800.0  # Time in secs before repeat nag msg is sent
     _transition_wait_time = 16  # Time in secs to wait for door operation to complete (open/close)
     _DATA_FILE = '.door_saved_data.db'
     _data_f = None  # The file that stores persistent data, not thread safe, use one per class
@@ -124,9 +124,9 @@ class Door(object):
 
         # Create the events with customized messages
         self.CLOSE_E = Door.CLOSE_E.localize("{}'s door was closed.".format(self.name))
-        #self.OPEN_E = Door.OPEN_E.localize("{}'s door was opened.".format(self.name))
-        self.OPEN_E = Door.OPEN_E.localize("{}'s door is still opened. Click https://67.246.62.98:9090/web/".format(self.name))
+        self.OPEN_E = Door.OPEN_E.localize("{}'s door was opened.".format(self.name))
         self.TIMER_E = Door.TIMER_E.localize("{}'s door is still opened.".format(self.name))
+        self.TIMER_E = Door.TIMER_E.localize("{}'s door is still opened. Click https://67.246.62.98:9090/web/".format(self.name))
         self.DOOR_CLOSING_ERROR_E = Door.DOOR_CLOSING_ERROR_E.localize("Error closing {}'s door.".format(self.name))
         self.DOOR_OPENING_ERROR_E = Door.DOOR_OPENING_ERROR_E.localize("Error opening {}'s door.".format(self.name))
         self.BUTTON_CLOSE_E = Door.BUTTON_CLOSE_E.localize("Confirming {}'s door closed.".format(self.name))
