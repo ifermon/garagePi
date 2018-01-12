@@ -123,15 +123,14 @@ class Door(object):
         self._id = str(type(self)) + self.name
 
         # Create the events with customized messages
-        self.CLOSE_E = Door.CLOSE_E.localize("{}'s door was closed.".format(self.name))
-        self.OPEN_E = Door.OPEN_E.localize("{}'s door was opened.".format(self.name))
-        self.TIMER_E = Door.TIMER_E.localize("{}'s door is still opened.".format(self.name))
-        self.TIMER_E = Door.TIMER_E.localize("{}'s door is still opened. Click https://67.246.62.98:9090/web/".format(self.name))
-        self.DOOR_CLOSING_ERROR_E = Door.DOOR_CLOSING_ERROR_E.localize("Error closing {}'s door.".format(self.name))
-        self.DOOR_OPENING_ERROR_E = Door.DOOR_OPENING_ERROR_E.localize("Error opening {}'s door.".format(self.name))
-        self.BUTTON_CLOSE_E = Door.BUTTON_CLOSE_E.localize("Confirming {}'s door closed.".format(self.name))
-        self.BUTTON_OPEN_E = Door.BUTTON_OPEN_E.localize("Confirming {}'s door opened.".format(self.name))
-        self.BUTTON_OPEN_E = Door.BUTTON_OPEN_E.localize("Confirming {}'s door opened. Click https://67.246.62.98:9090/web/".format(self.name))
+        URL = "https://67.246.62.98:9090/web/"
+        self.CLOSE_E = Door.CLOSE_E.localize("{}'s door was closed. {}".format(self.name, URL))
+        self.OPEN_E = Door.OPEN_E.localize("{}'s door was opened. {}".format(self.name, URL))
+        self.TIMER_E = Door.TIMER_E.localize("{}'s door is still opened. {}".format(self.name, URL))
+        self.DOOR_CLOSING_ERROR_E = Door.DOOR_CLOSING_ERROR_E.localize("Error closing {}'s door. {}".format(self.name, URL))
+        self.DOOR_OPENING_ERROR_E = Door.DOOR_OPENING_ERROR_E.localize("Error opening {}'s door. {}".format(self.name, URL))
+        self.BUTTON_CLOSE_E = Door.BUTTON_CLOSE_E.localize("Confirming {}'s door closed. {}".format(self.name, URL))
+        self.BUTTON_OPEN_E = Door.BUTTON_OPEN_E.localize("Confirming {}'s door opened. {}".format(self.name, URL))
 
         # Load any saved data, this includes subscriptions and history
         if Door._data_f is None:
