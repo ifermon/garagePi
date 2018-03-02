@@ -223,7 +223,8 @@ if __name__ == "__main__":
              'i': ivan_door.press_button,
              'h': heather_door.press_button}
     # Number map just gives a list of valid numbers for the from
-    valid_numbers = [const.Ivan_cell, const.Heather_cell]
+    valid_numbers = [const.Ivan_cell, const.Heather_cell, const.Zane_cell]
+    extra_notification = [const.Zane_cell, ]
 
     # We are a service, so tell them that we have started up successfully
     n = sdnotify.SystemdNotifier()
@@ -253,6 +254,10 @@ if __name__ == "__main__":
                     GS.send_message("Got msg from invalid number {0}".format(
                                     msg['From']))
                     continue
+            # tell me if Zane is using it
+            if msg['From'] in extra_notification:
+                l.info("Got command from special user")
+                GS.send_message("Got message from Zane")
 
             # now process the message
             cmd_str = msg['Text'].lower().strip().split()

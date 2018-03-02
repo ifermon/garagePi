@@ -123,7 +123,7 @@ class Door(object):
         self._id = str(type(self)) + self.name
 
         # Create the events with customized messages
-        URL = "https://67.246.62.98:9090/web/"
+        URL = "https://67.246.62.98:443/web/"
         self.CLOSE_E = Door.CLOSE_E.localize("{}'s door was closed. {}".format(self.name, URL))
         self.OPEN_E = Door.OPEN_E.localize("{}'s door was opened. {}".format(self.name, URL))
         self.TIMER_E = Door.TIMER_E.localize("{}'s door is still opened. {}".format(self.name, URL))
